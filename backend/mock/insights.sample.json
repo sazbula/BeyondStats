@@ -1,0 +1,18 @@
+{
+  "geo": "usa",
+  "year": 2015,
+  "scores": {
+    "pay_gap": 0.22,
+    "labor_gap": 0.18,
+    "health_gap": 0.35
+  },
+  "top_drivers": [
+    { "feature": "female_labor_participation", "direction": "down", "impact": 0.12 },
+    { "feature": "education_gap", "direction": "up", "impact": 0.08 },
+    { "feature": "unemployment_gap", "direction": "up", "impact": 0.06 }
+  ],
+  "recommendations": [
+    { "title": "Expand childcare access", "why": "Countries with similar profiles improved labor participation", "evidence_peers": ["swe","can","nld"] },
+    { "title": "Target youth mental health", "why": "High male suicide gap correlates with unemployment + alcohol", "evidence_peers": ["fin","est","ltu"] }
+  ]
+}
