@@ -1,1 +1,0 @@
-// Homepage logic (navigation, clicks)
