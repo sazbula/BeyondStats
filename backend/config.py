@@ -1,1 +1,0 @@
-# Global config (paths, constants, env vars)

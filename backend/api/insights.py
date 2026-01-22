@@ -1,1 +1,0 @@
-# Endpoints like: /insights?country=FRA&year=2020
