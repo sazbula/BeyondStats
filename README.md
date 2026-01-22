@@ -1,1 +1,0 @@
-# What the project is, how to run it, who does what
