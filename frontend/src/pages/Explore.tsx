@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { WorldMap } from "@/components/explore/WorldMap";
+import WorldMap from "@/components/explore/WorldMap"; // ✅ default import
 import { CountrySidePanel } from "@/components/explore/CountrySidePanel";
 
 interface SelectedRegion {
