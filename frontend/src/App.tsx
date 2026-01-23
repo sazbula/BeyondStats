@@ -8,6 +8,7 @@ import Explore from "./pages/Explore";
 import Country from "./pages/Country";
 import Games from "./pages/Games";
 import PurchasingPowerGamePage from "./pages/PurchasingPowerGamePage";
+import MythOrFactGamePage from "./pages/MythOrFactGamePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/country" element={<Country />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/purchasing-power" element={<PurchasingPowerGamePage />} />
+          <Route path="/games/myth-or-fact" element={<MythOrFactGamePage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
