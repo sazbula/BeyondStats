@@ -17,7 +17,7 @@ import {
 const mockInsights = [
   "Women earn approximately 22% less than men in comparable positions",
   "Education gap has nearly closed over the past two decades",
-  "Healthcare access remains relatively equal between genders",
+  "Healthcare access stays relatively equal between genders",
   "Female labor force participation has increased by 15% since 2000",
   "Male suicide rate correlates with higher unemployment periods",
 ];
