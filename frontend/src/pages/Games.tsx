@@ -15,7 +15,7 @@ const games = [
     title: "Time Machine",
     description: "Travel through time and see how gender equality has evolved across decades. Witness the changes year by year.",
     icon: Clock,
-    path: "/games/time-machine",
+    path: "/timeline",
     color: "from-secondary to-secondary/30",
   },
   {

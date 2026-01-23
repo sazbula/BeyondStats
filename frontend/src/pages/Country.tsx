@@ -29,12 +29,12 @@ const mockRecommendations = [
 ];
 
 const regions = [
-  { id: "na", name: "North America", flag: "🌎" },
-  { id: "eu", name: "Europe", flag: "🌍" },
-  { id: "as", name: "Asia", flag: "🌏" },
-  { id: "af", name: "Africa", flag: "🌍" },
-  { id: "sa", name: "South America", flag: "🌎" },
-  { id: "oc", name: "Oceania", flag: "🌏" },
+  { id: "na", name: "North America", flag: "" },
+  { id: "eu", name: "Europe", flag: "" },
+  { id: "as", name: "Asia", flag: "" },
+  { id: "af", name: "Africa", flag: "" },
+  { id: "sa", name: "South America", flag: "" },
+  { id: "oc", name: "Oceania", flag: "" },
 ] as const;
 
 type RegionId = (typeof regions)[number]["id"];
