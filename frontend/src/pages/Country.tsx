@@ -1,5 +1,8 @@
+// src/pages/Country.tsx
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, GraduationCap, Heart, Users } from "lucide-react";
+
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/country/StatCard";
 import { InsightCard } from "@/components/country/InsightCard";
@@ -19,16 +22,79 @@ const mockInsights = [
   "Male suicide rate correlates with higher unemployment periods",
 ];
 
-const countries = [
+const mockRecommendations = [
+  { title: "Improve pay transparency", why: "Reduces unexplained wage gaps over time." },
+  { title: "Affordable childcare access", why: "Often increases women’s labor participation." },
+  { title: "Targeted mental health support", why: "Can help address high male suicide rates in some regions." },
+];
+
+const regions = [
   { id: "na", name: "North America", flag: "🌎" },
   { id: "eu", name: "Europe", flag: "🌍" },
   { id: "as", name: "Asia", flag: "🌏" },
   { id: "af", name: "Africa", flag: "🌍" },
   { id: "sa", name: "South America", flag: "🌎" },
   { id: "oc", name: "Oceania", flag: "🌏" },
-];
+] as const;
+
+type RegionId = (typeof regions)[number]["id"];
+
+type CountryOption = { id: string; name: string };
+
+const countriesByRegion: Record<RegionId, CountryOption[]> = {
+  eu: [
+    { id: "FR", name: "France" },
+    { id: "SE", name: "Sweden" },
+    { id: "DE", name: "Germany" },
+    { id: "ES", name: "Spain" },
+  ],
+  na: [
+    { id: "US", name: "United States" },
+    { id: "CA", name: "Canada" },
+    { id: "MX", name: "Mexico" },
+  ],
+  as: [
+    { id: "JP", name: "Japan" },
+    { id: "IN", name: "India" },
+    { id: "KR", name: "South Korea" },
+  ],
+  af: [
+    { id: "NG", name: "Nigeria" },
+    { id: "ZA", name: "South Africa" },
+    { id: "KE", name: "Kenya" },
+  ],
+  sa: [
+    { id: "BR", name: "Brazil" },
+    { id: "AR", name: "Argentina" },
+    { id: "CL", name: "Chile" },
+  ],
+  oc: [
+    { id: "AU", name: "Australia" },
+    { id: "NZ", name: "New Zealand" },
+  ],
+};
+
+const YEARS = [2023, 2022, 2021, 2020, 2019];
 
 const Country = () => {
+  const [region, setRegion] = useState<RegionId>("eu");
+  const [countryId, setCountryId] = useState<string>(countriesByRegion.eu[0].id);
+  const [year, setYear] = useState<string>("2023");
+
+  const regionObj = useMemo(() => regions.find((r) => r.id === region)!, [region]);
+  const countryOptions = useMemo(() => countriesByRegion[region], [region]);
+
+  const selectedCountry = useMemo(() => {
+    const found = countryOptions.find((c) => c.id === countryId);
+    return found ?? countryOptions[0];
+  }, [countryOptions, countryId]);
+
+  const handleRegionChange = (newRegion: RegionId) => {
+    setRegion(newRegion);
+    const first = countriesByRegion[newRegion]?.[0];
+    if (first) setCountryId(first.id);
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-6 py-8">
@@ -41,35 +107,51 @@ const Country = () => {
         >
           <div>
             <h1 className="text-4xl font-display font-bold text-foreground mb-2">
-              🌍 Europe
+              {regionObj.flag} {selectedCountry?.name}
             </h1>
             <p className="text-muted-foreground">
               Deep dive into gender equality metrics and trends
             </p>
           </div>
-          
-          <div className="flex gap-3">
-            <Select defaultValue="eu">
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select country" />
+
+          <div className="flex gap-3 flex-wrap">
+            {/* Region dropdown */}
+            <Select value={region} onValueChange={(v) => handleRegionChange(v as RegionId)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select region" />
               </SelectTrigger>
               <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.id} value={country.id}>
-                    {country.flag} {country.name}
+                {regions.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.flag} {r.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            
-            <Select defaultValue="2023">
+
+            {/* Country dropdown */}
+            <Select value={countryId} onValueChange={setCountryId}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countryOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Year dropdown */}
+            <Select value={year} onValueChange={setYear}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
-                {[2023, 2022, 2021, 2020, 2019].map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
+                {YEARS.map((y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    {y}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -117,8 +199,9 @@ const Country = () => {
 
         {/* Detailed Sections */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Gender Gaps Breakdown */}
+          {/* Left column */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Gender Gaps Breakdown */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -128,13 +211,29 @@ const Country = () => {
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
                 Gender Gaps Breakdown
               </h2>
-              
+
               <div className="space-y-6">
                 {[
-                  { label: "Income Equality", value: 78, description: "Women earn 78¢ for every $1 men earn" },
-                  { label: "Labor Participation", value: 72, description: "72% of women vs 85% of men in workforce" },
-                  { label: "Education Attainment", value: 95, description: "Near parity in educational outcomes" },
-                  { label: "Political Representation", value: 42, description: "42% of parliamentary seats held by women" },
+                  {
+                    label: "Income Equality",
+                    value: 78,
+                    description: "Women earn 78¢ for every $1 men earn",
+                  },
+                  {
+                    label: "Labor Participation",
+                    value: 72,
+                    description: "72% of women vs 85% of men in workforce",
+                  },
+                  {
+                    label: "Education Attainment",
+                    value: 95,
+                    description: "Near parity in educational outcomes",
+                  },
+                  {
+                    label: "Political Representation",
+                    value: 42,
+                    description: "42% of parliamentary seats held by women",
+                  },
                 ].map((item, index) => (
                   <motion.div
                     key={item.label}
@@ -146,6 +245,7 @@ const Country = () => {
                       <span className="font-medium text-foreground">{item.label}</span>
                       <span className="text-sm text-muted-foreground">{item.value}%</span>
                     </div>
+
                     <div className="h-2 bg-secondary rounded-full overflow-hidden mb-1">
                       <motion.div
                         initial={{ width: 0 }}
@@ -154,6 +254,7 @@ const Country = () => {
                         className="h-full accent-gradient rounded-full"
                       />
                     </div>
+
                     <p className="text-xs text-muted-foreground">{item.description}</p>
                   </motion.div>
                 ))}
@@ -170,7 +271,7 @@ const Country = () => {
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
                 Change Over Time
               </h2>
-              
+
               <div className="flex items-end justify-between h-40 gap-2">
                 {[
                   { year: 2019, score: 68 },
@@ -178,24 +279,46 @@ const Country = () => {
                   { year: 2021, score: 75 },
                   { year: 2022, score: 79 },
                   { year: 2023, score: 82 },
-                ].map((data, index) => (
-                  <div key={data.year} className="flex-1 flex flex-col items-center gap-2">
+                ].map((d, index) => (
+                  <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
                     <motion.div
                       initial={{ height: 0 }}
-                      animate={{ height: `${data.score}%` }}
+                      animate={{ height: `${d.score}%` }}
                       transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
                       className="w-full accent-gradient rounded-t-lg min-h-[20px]"
                     />
-                    <span className="text-xs text-muted-foreground">{data.year}</span>
+                    <span className="text-xs text-muted-foreground">{d.year}</span>
                   </div>
                 ))}
               </div>
             </motion.div>
           </div>
 
-          {/* Insights */}
+          {/* Right column: Insights + Recommendations */}
           <div className="lg:col-span-1">
             <InsightCard insights={mockInsights} delay={0.4} />
+
+            <div className="stat-card mt-6">
+              <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+                Recommendations
+              </h2>
+
+              <div className="space-y-3">
+                {mockRecommendations.map((r) => (
+                  <div
+                    key={r.title}
+                    className="border border-border rounded-xl p-4 bg-card/50"
+                  >
+                    <div className="font-medium text-foreground">{r.title}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{r.why}</div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-4">
+                (Later you’ll replace these with backend/model-driven recommendations for {selectedCountry?.name} in {year}.)
+              </p>
+            </div>
           </div>
         </div>
       </div>
