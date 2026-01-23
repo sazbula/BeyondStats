@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { MythOrFactGame } from "@/components/games/MythOrFactGame";
+import { Button } from "@/components/ui/button";
 
 const MythOrFactGamePage = () => {
   return (
@@ -13,15 +14,15 @@ const MythOrFactGamePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="flex items-center gap-4 mb-8"
         >
-          <Link 
-            to="/games" 
-            className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Games
+          <Link to="/games">
+            <Button variant="ghost" size="icon" className="rounded-xl">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
           </Link>
+          
+          
         </motion.div>
 
         {/* Game */}

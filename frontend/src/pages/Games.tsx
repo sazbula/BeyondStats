@@ -9,14 +9,14 @@ const games = [
     description: "Test your knowledge about gender inequality with a series of true or false questions. Challenge common misconceptions.",
     icon: HelpCircle,
     path: "/games/myth-or-fact",
-    color: "from-primary/20 to-primary/5",
+    color: "from-secondary to-secondary/30",
   },
   {
     title: "Time Machine",
     description: "Travel through time and see how gender equality has evolved across decades. Witness the changes year by year.",
     icon: Clock,
     path: "/games/time-machine",
-    color: "from-accent/40 to-accent/10",
+    color: "from-secondary to-secondary/30",
   },
   {
     title: "Purchasing Power",

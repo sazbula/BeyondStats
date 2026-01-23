@@ -41,7 +41,12 @@ export default function WorldMap() {
       const chart = new window.google.visualization.GeoChart(
         document.getElementById("regions_div")
       );
-      chart.draw(data, { legend: "none" });
+      chart.draw(data, {
+  legend: "none",
+  backgroundColor: "transparent",
+  datalessRegionColor: "#f2e9ef", // optional: soft pinkish empty land
+});
+
     }
   }, []);
 

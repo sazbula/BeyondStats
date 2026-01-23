@@ -39,40 +39,8 @@ const PurchasingPowerGamePage = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div className="flex-1">
-            <h1 className="text-3xl font-display font-bold text-foreground">
-              Purchasing Power
-            </h1>
-            <p className="text-muted-foreground">
-              Experience the economic gap through everyday purchases
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Select defaultValue="us">
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Country" />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.id} value={country.id}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select defaultValue="2023">
-              <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {[2023, 2022, 2021].map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          
+          
         </motion.div>
 
         {/* Game Instructions */}
