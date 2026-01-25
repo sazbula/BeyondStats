@@ -66,7 +66,7 @@ const DataGridSection = () => {
     for (let i = 0; i < MAIN; i++) {
       const r = Math.random();
       const type: Particle["type"] =
-        r > 0.88 ? "glow" : r > 0.45 ? "primary" : "secondary";
+        r > 0.78 ? "glow" : r > 0.45 ? "primary" : "secondary";
 
       const baseSize =
         type === "glow" ? Math.random() * 10 + 6 : type === "primary" ? Math.random() * 5 + 2.5 : Math.random() * 3 + 1.5;
@@ -79,7 +79,7 @@ const DataGridSection = () => {
         delay: Math.random() * 1.2, // less delay spread = less chaotic popping
         duration: Math.random() * 5 + 6, // longer cycles = smoother
         opacity:
-          type === "glow" ? 0.85 : type === "primary" ? 0.6 : Math.random() * 0.25 + 0.18,
+          type === "glow" ? 0.70 : type === "primary" ? 0.6 : Math.random() * 0.25 + 0.18,
         type,
       });
     }
@@ -178,8 +178,11 @@ const DataGridSection = () => {
       case "glow":
         return {
           backgroundColor: "hsl(var(--primary))",
-          boxShadow:
-            "0 0 26px hsl(var(--primary) / 0.75), 0 0 52px hsl(var(--primary) / 0.35)",
+          boxShadow: `
+            0 0 40px hsl(var(--primary) / 0.9),
+            0 0 80px hsl(var(--primary) / 0.5),
+            0 0 140px hsl(var(--primary) / 0.25)
+            `,
         };
       case "primary":
         return {
