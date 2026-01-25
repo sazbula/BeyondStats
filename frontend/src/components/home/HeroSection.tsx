@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[60vh] flex items-center justify-center hero-gradient overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center hero-gradient overflow-hidden">
       {/* Abstract background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -38,19 +39,36 @@ export function HeroSection() {
           />
         ))}
       </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 1.2 }}
+        className="absolute bottom-20 md:bottom-28 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+      >
+        <motion.div
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-2"
+        >
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
+            Scroll to begin
+          </span>
+          <ChevronDown className="w-5 h-12 text-muted-foreground" />
+        </motion.div>
+      </motion.div>
 
       <div className="container mx-auto px-6 relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center max-w-3xl mx-auto"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: -100 }}
+        transition={{ duration: 0.8 }}
+        className="text-center max-w-4xl mx-auto"
         >
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-5xl md:text-7xl font-display font-bold text-foreground mb-6"
+            className="text-5xl md:text-7xl lg:text-8xl font-display font-bold text-foreground mb-6"
           >
             Beyond<span className="text-primary">Stats</span>
           </motion.h1>
@@ -59,7 +77,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-xl md:text-2xl text-muted-foreground font-light mb-4"
+            className="text-1xl md:text-2xl text-muted-foreground font-light mb-5"
           >
             Exploring gender inequality through data, countries, and time
           </motion.p>
@@ -68,7 +86,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-base text-muted-foreground/80 max-w-xl mx-auto"
+            className="text-base md:text-xl text-muted-foreground/80 max-w-2xl mx-auto"
           >
             Dive into interactive visualizations, compare countries, 
             and understand the factors shaping gender equality around the world.
