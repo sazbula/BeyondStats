@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { byCountryYear, loadPredictionsCsv, type PredictionRow } from "@/lib/predictions";
-
+import { byCountryYear, loadPredictionsCsv, type PredictionRow, fillMissingFronts } from "@/lib/predictions";
+    
 export function usePredictions() {
   const [rows, setRows] = useState<PredictionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export function usePredictions() {
         setLoading(true);
         const r = await loadPredictionsCsv();
         if (!alive) return;
-        setRows(r);
+        setRows(fillMissingFronts(r));
         setError(null);
       } catch (e: any) {
         if (!alive) return;
