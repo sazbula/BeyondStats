@@ -1,11 +1,11 @@
-// src/pages/Country.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, GraduationCap, Heart, Users } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/country/StatCard";
 import { InsightCard } from "@/components/country/InsightCard";
+import { usePredictions } from "@/hooks/usePredictions";
 import {
   Select,
   SelectContent,
@@ -14,86 +14,157 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const mockInsights = [
-  "Women earn approximately 22% less than men in comparable positions",
-  "Education gap has nearly closed over the past two decades",
-  "Healthcare access stays relatively equal between genders",
-  "Female labor force participation has increased by 15% since 2000",
-  "Male suicide rate correlates with higher unemployment periods",
-];
+type Trend = "up" | "down" | "stable";
 
-const mockRecommendations = [
-  { title: "Improve pay transparency", why: "Reduces unexplained wage gaps over time." },
-  { title: "Affordable childcare access", why: "Often increases women’s labor participation." },
-  { title: "Targeted mental health support", why: "Can help address high male suicide rates in some regions." },
-];
-
-const regions = [
-  { id: "na", name: "North America", flag: "" },
-  { id: "eu", name: "Europe", flag: "" },
-  { id: "as", name: "Asia", flag: "" },
-  { id: "af", name: "Africa", flag: "" },
-  { id: "sa", name: "South America", flag: "" },
-  { id: "oc", name: "Oceania", flag: "" },
-] as const;
-
-type RegionId = (typeof regions)[number]["id"];
-
-type CountryOption = { id: string; name: string };
-
-const countriesByRegion: Record<RegionId, CountryOption[]> = {
-  eu: [
-    { id: "FR", name: "France" },
-    { id: "SE", name: "Sweden" },
-    { id: "DE", name: "Germany" },
-    { id: "ES", name: "Spain" },
-  ],
-  na: [
-    { id: "US", name: "United States" },
-    { id: "CA", name: "Canada" },
-    { id: "MX", name: "Mexico" },
-  ],
-  as: [
-    { id: "JP", name: "Japan" },
-    { id: "IN", name: "India" },
-    { id: "KR", name: "South Korea" },
-  ],
-  af: [
-    { id: "NG", name: "Nigeria" },
-    { id: "ZA", name: "South Africa" },
-    { id: "KE", name: "Kenya" },
-  ],
-  sa: [
-    { id: "BR", name: "Brazil" },
-    { id: "AR", name: "Argentina" },
-    { id: "CL", name: "Chile" },
-  ],
-  oc: [
-    { id: "AU", name: "Australia" },
-    { id: "NZ", name: "New Zealand" },
-  ],
+type CountryMeta = {
+  iso3: string;
+  iso2: string;
+  name: string;
+  region: string; // Europe / Asia / Africa / Americas / Oceania / Other
 };
 
-const YEARS = [2023, 2022, 2021, 2020, 2019];
+const closenessPct = (v: number) => Math.round((1 / (1 + Math.abs(v))) * 100);
+
+const trendToZero = (curr?: number, prev?: number): Trend => {
+  if (curr == null || prev == null) return "stable";
+  const dc = Math.abs(curr);
+  const dp = Math.abs(prev);
+  if (Math.abs(dc - dp) < 1e-9) return "stable";
+  return dc < dp ? "up" : "down";
+};
+
+const REGION_ORDER = ["Europe", "Americas", "Asia", "Africa", "Oceania", "Other"] as const;
 
 const Country = () => {
-  const [region, setRegion] = useState<RegionId>("eu");
-  const [countryId, setCountryId] = useState<string>(countriesByRegion.eu[0].id);
-  const [year, setYear] = useState<string>("2023");
+  const { rows, index, loading, error } = usePredictions();
 
-  const regionObj = useMemo(() => regions.find((r) => r.id === region)!, [region]);
-  const countryOptions = useMemo(() => countriesByRegion[region], [region]);
+  // Load ISO3->name->region mapping
+  const [meta, setMeta] = useState<CountryMeta[]>([]);
+  const [metaError, setMetaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/data/country_meta.json")
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to load country_meta.json (${r.status})`);
+        return r.json();
+      })
+      .then((data) => {
+        if (!alive) return;
+        setMeta(Array.isArray(data) ? data : []);
+        setMetaError(null);
+      })
+      .catch((e) => {
+        if (!alive) return;
+        setMetaError(e?.message ?? "Failed to load country metadata");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Countries available in predictions CSV
+  const iso3WithData = useMemo(() => new Set(rows.map((r) => r.countryCode)), [rows]);
+
+  // Meta filtered to only those present in CSV
+  const metaWithData = useMemo(() => {
+    if (!meta.length) return [];
+    return meta.filter((m) => iso3WithData.has(m.iso3));
+  }, [meta, iso3WithData]);
+
+  // Regions present (from metaWithData)
+  const regions = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of metaWithData) set.add(m.region || "Other");
+    const inOrder = REGION_ORDER.filter((r) => set.has(r));
+    const rest = Array.from(set).filter((r) => !inOrder.includes(r as any)).sort();
+    return ["All", ...inOrder, ...rest];
+  }, [metaWithData]);
+
+  const [region, setRegion] = useState<string>("All");
+  const [countryIso3, setCountryIso3] = useState<string>("");
+  const [year, setYear] = useState<number>(2023);
+
+  // Countries for current region
+  const countryOptions = useMemo(() => {
+    const list =
+      region === "All"
+        ? metaWithData
+        : metaWithData.filter((m) => (m.region || "Other") === region);
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [metaWithData, region]);
+
+  // Ensure selected country exists
+  useEffect(() => {
+    if (!countryOptions.length) return;
+    if (!countryIso3 || !countryOptions.some((c) => c.iso3 === countryIso3)) {
+      setCountryIso3(countryOptions[0].iso3);
+    }
+  }, [countryOptions, countryIso3]);
 
   const selectedCountry = useMemo(() => {
-    const found = countryOptions.find((c) => c.id === countryId);
-    return found ?? countryOptions[0];
-  }, [countryOptions, countryId]);
+    return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
+  }, [countryOptions, countryIso3]);
 
-  const handleRegionChange = (newRegion: RegionId) => {
-    setRegion(newRegion);
-    const first = countriesByRegion[newRegion]?.[0];
-    if (first) setCountryId(first.id);
-  };
+  // Available years for selected country (from predictions index)
+  const availableYears = useMemo(() => {
+    if (!countryIso3) return [];
+    const byYear = index?.[countryIso3];
+    if (!byYear) return [];
+    return Object.keys(byYear).map(Number).sort((a, b) => b - a);
+  }, [index, countryIso3]);
+
+  // Keep year valid
+  useEffect(() => {
+    if (!availableYears.length) return;
+    if (!availableYears.includes(year)) setYear(availableYears[0]);
+  }, [availableYears, year]);
+
+  const row = countryIso3 ? index?.[countryIso3]?.[year] : undefined;
+  const prev = countryIso3 ? index?.[countryIso3]?.[year - 1] : undefined;
+
+  // overall_score is predicted GII-like: lower is better -> convert to "higher is better"
+  const overallScore = row ? Math.round((1 - row.overall_score) * 100) : null;
+
+  const econPct = row ? closenessPct(row.ineq_econ) : null;
+  const socPct = row ? closenessPct(row.ineq_soc) : null;
+  const phyPct = row ? closenessPct(row.ineq_phy) : null;
+
+  const overallTrend: Trend =
+    row && prev ? trendToZero(row.overall_score, prev.overall_score) : "stable";
+  const econTrend: Trend =
+    row && prev ? trendToZero(row.ineq_econ, prev.ineq_econ) : "stable";
+  const socTrend: Trend =
+    row && prev ? trendToZero(row.ineq_soc, prev.ineq_soc) : "stable";
+  const phyTrend: Trend =
+    row && prev ? trendToZero(row.ineq_phy, prev.ineq_phy) : "stable";
+
+  const insights = useMemo(() => {
+    if (!row) return ["No prediction available for this country/year (filtered out or missing)."];
+
+    const parts = [
+      { name: "Economic", v: Math.abs(row.ineq_econ) },
+      { name: "Social", v: Math.abs(row.ineq_soc) },
+      { name: "Physical", v: Math.abs(row.ineq_phy) },
+    ].sort((a, b) => b.v - a.v);
+
+    return [
+      `Overall is derived from predicted GII. Lower is better; displayed score is (1 − GII) × 100.`,
+      `Largest deviation from 0 is in the ${parts[0].name.toLowerCase()} front.`,
+      `Most balanced front (closest to 0) is ${parts[2].name.toLowerCase()}.`,
+    ];
+  }, [row]);
+
+  // Trend series (last 5 available years, ascending)
+  const trendSeries = useMemo(() => {
+    if (!countryIso3 || !availableYears.length) return [];
+    const yearsAsc = [...availableYears].sort((a, b) => a - b).slice(-5);
+    return yearsAsc.map((y) => {
+      const r = index?.[countryIso3]?.[y];
+      const score = r ? Math.round((1 - r.overall_score) * 100) : 0;
+      return { year: y, score };
+    });
+  }, [availableYears, index, countryIso3]);
 
   return (
     <Layout>
@@ -107,49 +178,60 @@ const Country = () => {
         >
           <div>
             <h1 className="text-4xl font-display font-bold text-foreground mb-2">
-              {regionObj.flag} {selectedCountry?.name}
+              {selectedCountry?.name ?? countryIso3 ?? "Country"}
             </h1>
             <p className="text-muted-foreground">
               Deep dive into gender equality metrics and trends
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {countryIso3 ? `ISO3: ${countryIso3}` : ""}{selectedCountry?.region ? ` • Region: ${selectedCountry.region}` : ""}{availableYears.length ? ` • Year: ${year}` : ""}
             </p>
           </div>
 
           <div className="flex gap-3 flex-wrap">
             {/* Region dropdown */}
-            <Select value={region} onValueChange={(v) => handleRegionChange(v as RegionId)}>
+            <Select value={region} onValueChange={setRegion} disabled={!regions.length}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select region" />
               </SelectTrigger>
               <SelectContent>
                 {regions.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    {r.flag} {r.name}
+                  <SelectItem key={r} value={r}>
+                    {r}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            {/* Country dropdown */}
-            <Select value={countryId} onValueChange={setCountryId}>
-              <SelectTrigger className="w-[220px]">
-                <SelectValue placeholder="Select country" />
+            {/* Country dropdown (ALL countries from CSV, with names) */}
+            <Select
+              value={countryIso3}
+              onValueChange={setCountryIso3}
+              disabled={!countryOptions.length}
+            >
+              <SelectTrigger className="w-[260px]">
+                <SelectValue placeholder={loading ? "Loading…" : "Select country"} />
               </SelectTrigger>
               <SelectContent>
                 {countryOptions.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
+                  <SelectItem key={c.iso3} value={c.iso3}>
+                    {c.name} ({c.iso3})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {/* Year dropdown */}
-            <Select value={year} onValueChange={setYear}>
+            <Select
+              value={availableYears.length ? year.toString() : ""}
+              onValueChange={(v) => setYear(Number(v))}
+              disabled={!availableYears.length}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
-                {YEARS.map((y) => (
+                {availableYears.map((y) => (
                   <SelectItem key={y} value={y.toString()}>
                     {y}
                   </SelectItem>
@@ -158,6 +240,14 @@ const Country = () => {
             </Select>
           </div>
         </motion.div>
+
+        {(loading || error || metaError) && (
+          <div className="mb-6 text-sm">
+            {loading && <div className="text-muted-foreground">Loading predictions…</div>}
+            {error && <div className="text-red-300">{error}</div>}
+            {metaError && <div className="text-red-300">{metaError}</div>}
+          </div>
+        )}
 
         {/* Overview Stats */}
         <motion.div
@@ -168,31 +258,31 @@ const Country = () => {
         >
           <StatCard
             label="Overall Score"
-            value="82"
+            value={overallScore != null ? String(overallScore) : "—"}
             subValue="/100"
             icon={Users}
-            trend="up"
+            trend={overallTrend}
             delay={0.1}
           />
           <StatCard
-            label="Economic Gap"
-            value="72%"
+            label="Economic Equality"
+            value={econPct != null ? `${econPct}%` : "—"}
             icon={DollarSign}
-            trend="up"
+            trend={econTrend}
             delay={0.2}
           />
           <StatCard
-            label="Education Gap"
-            value="95%"
+            label="Education Equality"
+            value={socPct != null ? `${socPct}%` : "—"}
             icon={GraduationCap}
-            trend="up"
+            trend={socTrend}
             delay={0.3}
           />
           <StatCard
-            label="Health Gap"
-            value="89%"
+            label="Health Equality"
+            value={phyPct != null ? `${phyPct}%` : "—"}
             icon={Heart}
-            trend="stable"
+            trend={phyTrend}
             delay={0.4}
           />
         </motion.div>
@@ -214,54 +304,41 @@ const Country = () => {
 
               <div className="space-y-6">
                 {[
-                  {
-                    label: "Income Equality",
-                    value: 78,
-                    description: "Women earn 78¢ for every $1 men earn",
-                  },
-                  {
-                    label: "Labor Participation",
-                    value: 72,
-                    description: "72% of women vs 85% of men in workforce",
-                  },
-                  {
-                    label: "Education Attainment",
-                    value: 95,
-                    description: "Near parity in educational outcomes",
-                  },
-                  {
-                    label: "Political Representation",
-                    value: 42,
-                    description: "42% of parliamentary seats held by women",
-                  },
-                ].map((item, index) => (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-foreground">{item.label}</span>
-                      <span className="text-sm text-muted-foreground">{item.value}%</span>
-                    </div>
+                  { label: "Economic front", pct: econPct, raw: row?.ineq_econ },
+                  { label: "Social front", pct: socPct, raw: row?.ineq_soc },
+                  { label: "Physical front", pct: phyPct, raw: row?.ineq_phy },
+                ].map((item, i) => {
+                  const v = item.pct ?? 0;
+                  return (
+                    <motion.div
+                      key={item.label}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium text-foreground">{item.label}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {item.pct != null ? `${item.pct}%` : "—"}
+                          {item.raw != null ? ` • raw ${item.raw.toFixed(2)}` : ""}
+                        </span>
+                      </div>
 
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden mb-1">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${item.value}%` }}
-                        transition={{ duration: 0.8, delay: 0.5 + index * 0.1 }}
-                        className="h-full accent-gradient rounded-full"
-                      />
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
-                  </motion.div>
-                ))}
+                      <div className="h-2 bg-secondary rounded-full overflow-hidden mb-1">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${v}%` }}
+                          transition={{ duration: 0.8, delay: 0.5 + i * 0.1 }}
+                          className="h-full accent-gradient rounded-full"
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
 
-            {/* Historical Trend */}
+            {/* Change Over Time */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -273,30 +350,28 @@ const Country = () => {
               </h2>
 
               <div className="flex items-end justify-between h-40 gap-2">
-                {[
-                  { year: 2019, score: 68 },
-                  { year: 2020, score: 72 },
-                  { year: 2021, score: 75 },
-                  { year: 2022, score: 79 },
-                  { year: 2023, score: 82 },
-                ].map((d, index) => (
-                  <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${d.score}%` }}
-                      transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
-                      className="w-full accent-gradient rounded-t-lg min-h-[20px]"
-                    />
-                    <span className="text-xs text-muted-foreground">{d.year}</span>
-                  </div>
-                ))}
+                {trendSeries.length ? (
+                  trendSeries.map((d, i) => (
+                    <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: `${d.score}%` }}
+                        transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
+                        className="w-full accent-gradient rounded-t-lg min-h-[20px]"
+                      />
+                      <span className="text-xs text-muted-foreground">{d.year}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-muted-foreground">No trend data available.</div>
+                )}
               </div>
             </motion.div>
           </div>
 
-          {/* Right column: Insights + Recommendations */}
+          {/* Right column */}
           <div className="lg:col-span-1">
-            <InsightCard insights={mockInsights} delay={0.4} />
+            <InsightCard insights={insights} delay={0.4} />
 
             <div className="stat-card mt-6">
               <h2 className="text-xl font-display font-semibold text-foreground mb-4">
@@ -304,19 +379,17 @@ const Country = () => {
               </h2>
 
               <div className="space-y-3">
-                {mockRecommendations.map((r) => (
-                  <div
-                    key={r.title}
-                    className="border border-border rounded-xl p-4 bg-card/50"
-                  >
-                    <div className="font-medium text-foreground">{r.title}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{r.why}</div>
+                <div className="border border-border rounded-xl p-4 bg-card/50">
+                  <div className="font-medium text-foreground">Placeholder</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Hook your model-driven recommendations here later.
                   </div>
-                ))}
+                </div>
               </div>
 
               <p className="text-xs text-muted-foreground mt-4">
-                (Later you’ll replace these with backend/model-driven recommendations for {selectedCountry?.name} in {year}.)
+                Data source: CSV predictions for {selectedCountry?.name ?? countryIso3 ?? "—"} in{" "}
+                {availableYears.length ? year : "—"}.
               </p>
             </div>
           </div>
