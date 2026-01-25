@@ -1,15 +1,54 @@
-import { useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+/**
+ * ✅ Canva icon workflow for this file
+ *
+ * 1) In Canva, design/export each icon as:
+ *    - SVG (best) OR PNG with transparent background
+ * 2) Put them in: /public/icons/
+ *    Example paths:
+ *    /public/icons/document.svg
+ *    /public/icons/coins.svg
+ *    /public/icons/factory.svg
+ *    ...
+ * 3) Update ICON_SRC below to match your filenames.
+ *
+ * Then this component will render your Canva icons automatically.
+ */
 
 export interface TimelineEventData {
   id: string;
   year: number;
   title: string;
   description: string;
-  type: "document" | "coins" | "factory" | "screen" | "landmark";
+  type:
+    | "document"
+    | "coins"
+    | "factory"
+    | "screen"
+    | "landmark"
+    | "ballot"
+    | "gavel"
+    | "bookLock"
+    | "steeringWheel"
+    | "megaphone"
+    | "fist"
+    | "shieldAlert"
+    | "podium"
+    | "care"
+    | "scales"
+    | "shield"
+    | "family"
+    | "unlock"
+    | "brokenGavel"
+    | "brokenCoins"
+    | "warningBook"
+    | "brokenShield"
+    | "warningRing";
   era: "past" | "early" | "mid" | "modern";
-  position: number; // horizontal position in the timeline
-  scale?: number; // visual importance (1-3)
+  position: number;
+  scale?: number;
 }
 
 interface TimelineEventProps {
@@ -18,151 +57,107 @@ interface TimelineEventProps {
   onClick: () => void;
 }
 
-const DocumentIcon = () => (
-  <div className="document w-16 h-20 flex flex-col items-center justify-center p-2 relative">
-    <div className="absolute top-1 right-1 w-4 h-4 bg-primary/20 rounded-bl-lg" />
-    <div className="space-y-1 w-full px-1">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className="h-1 bg-document-ink/30 rounded" style={{ width: `${70 + Math.random() * 30}%` }} />
-      ))}
-    </div>
-    <div className="absolute bottom-2 w-6 h-3 border-b-2 border-primary/40" />
-  </div>
-);
+/* ------------------------------------
+   ✅ Map each type -> Canva asset path
+   ------------------------------------ */
+const ICON_SRC: Record<TimelineEventData["type"], string> = {
+  document: "/icons/document.svg",
+  coins: "/icons/coins.svg",
+  factory: "/icons/factory.svg",
+  screen: "/icons/screen.svg",
+  landmark: "/icons/landmark.svg",
 
-const CoinsIcon = ({ gap = 0.22 }: { gap?: number }) => (
-  <div className="flex items-end gap-2">
-    {/* Full stack (men) */}
-    <div className="flex flex-col-reverse">
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="coin coin-gold w-8 h-3 -mb-1"
-          style={{ marginBottom: i === 0 ? 0 : -6 }}
-        />
-      ))}
-    </div>
-    {/* Shorter stack (women - showing the gap) */}
-    <div className="flex flex-col-reverse">
-      {[...Array(Math.round(5 * (1 - gap)))].map((_, i) => (
-        <div
-          key={i}
-          className="coin coin-silver w-8 h-3"
-          style={{ marginBottom: i === 0 ? 0 : -6 }}
-        />
-      ))}
-    </div>
-  </div>
-);
+  ballot: "/icons/ballot.svg",
+  gavel: "/icons/gavel.png",
+  bookLock: "/icons/book-lock.svg",
+  steeringWheel: "/icons/steering-wheel.svg",
+  megaphone: "/icons/megaphone.svg",
+  fist: "/icons/fist.svg",
+  shieldAlert: "/icons/shield-alert.svg",
 
-const FactoryIcon = () => (
-  <div className="relative w-20 h-16">
-    {/* Main building */}
-    <div className="absolute bottom-0 left-0 w-12 h-10 bg-character-body rounded-t-sm" />
-    {/* Chimney */}
-    <div className="absolute bottom-10 left-2 w-4 h-8 bg-character-body" />
-    {/* Smoke puffs */}
-    <motion.div
-      animate={{ y: [-2, -8], opacity: [0.8, 0] }}
-      transition={{ duration: 2, repeat: Infinity }}
-      className="absolute top-0 left-3 w-3 h-3 bg-muted-foreground/30 rounded-full"
-    />
-    {/* Windows */}
-    <div className="absolute bottom-2 left-2 grid grid-cols-2 gap-1">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="w-2 h-2 bg-coin-gold/60" />
-      ))}
-    </div>
-    {/* Second building */}
-    <div className="absolute bottom-0 right-0 w-8 h-6 bg-character-body/80 rounded-t-sm" />
-  </div>
-);
+  podium: "/icons/podium.svg",
+  care: "/icons/care.svg",
+  scales: "/icons/scales.svg",
+  shield: "/icons/shield.svg",
+  family: "/icons/family.svg",
+  unlock: "/icons/unlock.svg",
 
-const ScreenIcon = () => (
-  <div className="relative w-16 h-12 bg-foreground/90 rounded-lg p-1 shadow-lg">
-    <div className="w-full h-full bg-accent/20 rounded overflow-hidden">
-      {/* Chart bars */}
-      <div className="flex items-end justify-around h-full p-1 gap-0.5">
-        {[60, 80, 45, 90, 70].map((h, i) => (
-          <motion.div
-            key={i}
-            initial={{ height: 0 }}
-            animate={{ height: `${h}%` }}
-            transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="w-2 bg-accent rounded-t"
-          />
-        ))}
-      </div>
-    </div>
-    {/* Stand */}
-    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-2 bg-foreground/80 rounded-b" />
-  </div>
-);
-
-const LandmarkIcon = () => (
-  <div className="relative w-14 h-20">
-    {/* Podium */}
-    <div className="absolute bottom-0 w-full h-3 bg-muted-foreground/40 rounded-t" />
-    {/* Figure */}
-    <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-      <div className="w-6 h-8 bg-secondary rounded-t-full" />
-      <div className="w-4 h-4 bg-document-cream rounded-full mx-auto -mt-10" />
-    </div>
-    {/* Flag */}
-    <motion.div
-      animate={{ rotate: [-5, 5, -5] }}
-      transition={{ duration: 2, repeat: Infinity }}
-      className="absolute top-0 right-0 w-6 h-4 bg-primary/80 rounded-sm origin-left"
-    />
-    <div className="absolute top-0 right-6 w-1 h-10 bg-character-body" />
-  </div>
-);
-
-const eventIcons = {
-  document: DocumentIcon,
-  coins: CoinsIcon,
-  factory: FactoryIcon,
-  screen: ScreenIcon,
-  landmark: LandmarkIcon,
+  brokenGavel: "/icons/broken-gavel.svg",
+  brokenCoins: "/icons/broken-coins.svg",
+  warningBook: "/icons/warning-book.svg",
+  brokenShield: "/icons/broken-shield.svg",
+  warningRing: "/icons/warning-ring.svg",
 };
 
+/* ------------------------------------
+   CanvaIcon: renders SVG/PNG from /public
+   ------------------------------------ */
+const CanvaIcon = ({
+  type,
+  size = 72,
+  alt,
+}: {
+  type: TimelineEventData["type"];
+  size?: number;
+  alt?: string;
+}) => {
+  const src = ICON_SRC[type];
+
+  return (
+    <img
+      src={src}
+      alt={alt ?? type}
+      width={size}
+      height={size}
+      draggable={false}
+      className="select-none"
+      style={{
+        // helps make PNGs look less jaggy + keeps transparency clean
+        imageRendering: "auto",
+      }}
+    />
+  );
+};
+
+/* ------------------------------------
+   Main component
+   ------------------------------------ */
 const TimelineEvent = ({ event, isActive, onClick }: TimelineEventProps) => {
-  const Icon = eventIcons[event.type];
   const scale = event.scale || 1;
-  
+
   return (
     <div
       className="absolute flex flex-col items-center cursor-pointer"
       style={{
         left: `${event.position}px`,
         bottom: "80px",
-        transform: `scale(${0.8 + scale * 0.2})`,
+        transform: `scale(${0.85 + scale * 0.15})`,
       }}
       onClick={onClick}
     >
-      {/* Floating object */}
+      {/* Icon bubble (makes any Canva icon look consistent) */}
       <motion.div
-        className="floating-object"
-        whileHover={{ scale: 1.1 }}
-        animate={{
-          y: isActive ? -10 : 0,
-        }}
+        className="floating-object bg-transparent border-none rounded-none shadow-none"
+        whileHover={{ scale: 1.08, rotate: -1 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 450, damping: 22 }}
+        animate={{ y: isActive ? -10 : 0 }}
       >
-        <Icon />
+        <CanvaIcon type={event.type} size={200} alt={event.title} />
       </motion.div>
-      
+
       {/* Year marker */}
       <div className="mt-2 px-2 py-1 bg-background/80 backdrop-blur-sm rounded-full text-xs font-medium text-muted-foreground">
-        {event.year}
+        {event.year === 0 ? "Ongoing" : event.year}
       </div>
-      
+
       {/* Expanded card */}
       <AnimatePresence>
         {isActive && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
             className="checkpoint-card absolute bottom-full mb-4 w-64 z-10"
           >
             <h3 className="font-display text-lg font-semibold text-foreground mb-2">
