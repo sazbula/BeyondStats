@@ -45,6 +45,7 @@ const Country = () => {
   // Reset "applied URL year" when URL params change (new navigation)
   useEffect(() => {
     appliedUrlYearRef.current = false;
+    initializedRef.current = false; // Also reset country initialization
   }, [idFromUrl, yearFromUrlRaw]);
 
   // Load ISO3->name->region mapping
@@ -94,6 +95,9 @@ const Country = () => {
   const [countryIso3, setCountryIso3] = useState<string>("");
   const [year, setYear] = useState<number | null>(null);
 
+  // Track if we've done initial setup
+  const initializedRef = useRef(false);
+
   // Countries for current region
   const countryOptions = useMemo(() => {
     const list =
@@ -109,14 +113,30 @@ const Country = () => {
 
     const wanted = idFromUrl ? idFromUrl.toUpperCase() : null;
 
-    // 1) If URL has an id and it exists in current options, select it
-    if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
-      if (countryIso3 !== wanted) setCountryIso3(wanted);
+    // If this is initial load and we haven't set anything yet
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      
+      // 1) If URL has an id and it exists in current options, select it
+      if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
+        setCountryIso3(wanted);
+        return;
+      }
+      
+      // 2) Otherwise, select first option
+      setCountryIso3(countryOptions[0].iso3);
       return;
     }
 
-    // 2) Otherwise, ensure we have a valid selection (fallback to first option)
-    if (!countryIso3 || !countryOptions.some((c) => c.iso3 === countryIso3)) {
+    // After initialization, only update if current selection is invalid
+    if (countryIso3 && countryOptions.some((c) => c.iso3 === countryIso3)) {
+      return; // Current selection is valid, keep it
+    }
+    
+    // Current selection is invalid, pick new one
+    if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
+      setCountryIso3(wanted);
+    } else {
       setCountryIso3(countryOptions[0].iso3);
     }
   }, [countryOptions, countryIso3, idFromUrl]);
