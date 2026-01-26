@@ -137,12 +137,15 @@ const Country = () => {
     return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
   }, [countryOptions, countryIso3]);
 
-  // Available years for selected country
+  // Available years for selected country (exclude 2024)
   const availableYears = useMemo(() => {
     if (!countryIso3) return [];
     const byYear = index?.[countryIso3];
     if (!byYear) return [];
-    return Object.keys(byYear).map(Number).sort((a, b) => b - a);
+    return Object.keys(byYear)
+      .map(Number)
+      .filter((y) => y < 2024)
+      .sort((a, b) => b - a);
   }, [index, countryIso3]);
 
   // Initialize year from URL or default to latest (only once per page load)

@@ -67,7 +67,9 @@ const Explore = () => {
     return m;
   }, [meta]);
   const years = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.year))).sort((a, b) => b - a),
+    () => Array.from(new Set(rows.map((r) => r.year)))
+      .filter((y) => y < 2024)
+      .sort((a, b) => b - a),
     [rows]
   );
 
