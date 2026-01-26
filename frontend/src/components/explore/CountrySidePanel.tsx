@@ -127,7 +127,7 @@ export function CountrySidePanel({ isOpen, onClose, country }: CountrySidePanelP
                 ))}
               </div>
               {/* CTA */}
-              <Link to={`/country?id=${country.id}`}>
+              <Link to={`/country?id=${country.id}&year=${country.year}`}>
                 <Button className="w-full group" size="lg">
                   View Full Profile
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

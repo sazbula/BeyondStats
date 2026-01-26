@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, GraduationCap, Heart, Users } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/country/StatCard";
 import { RecommendationsCard } from "@/components/country/RecommendationsCard";
@@ -29,8 +30,22 @@ const trend = (curr?: number | null, prev?: number | null): Trend => {
 };
 const clamp01 = (v: number) => Math.max(0, Math.min(100, v));
 const REGION_ORDER = ["Europe", "Americas", "Asia", "Africa", "Oceania", "Other"] as const;
+
 const Country = () => {
   const { rows, index, loading, error } = usePredictions();
+
+  // ✅ read /country?id=USA&year=2019
+  const [searchParams, setSearchParams] = useSearchParams();
+  const idFromUrl = searchParams.get("id"); // ISO3
+  const yearFromUrlRaw = searchParams.get("year"); // e.g. "2019"
+
+  // ✅ prevents URL-sync from overwriting the incoming URL year
+  const appliedUrlYearRef = useRef(false);
+
+  // Reset "applied URL year" when URL params change (new navigation)
+  useEffect(() => {
+    appliedUrlYearRef.current = false;
+  }, [idFromUrl, yearFromUrlRaw]);
 
   // Load ISO3->name->region mapping
   const [meta, setMeta] = useState<CountryMeta[]>([]);
@@ -77,7 +92,7 @@ const Country = () => {
 
   const [region, setRegion] = useState<string>("All");
   const [countryIso3, setCountryIso3] = useState<string>("");
-  const [year, setYear] = useState<number>(2023);
+  const [year, setYear] = useState<number | null>(null);
 
   // Countries for current region
   const countryOptions = useMemo(() => {
@@ -88,13 +103,23 @@ const Country = () => {
     return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [metaWithData, region]);
 
-  // Ensure selected country exists
+  // ✅ Ensure selected country exists + prioritize URL param (?id=ISO3)
   useEffect(() => {
     if (!countryOptions.length) return;
+
+    const wanted = idFromUrl ? idFromUrl.toUpperCase() : null;
+
+    // 1) If URL has an id and it exists in current options, select it
+    if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
+      if (countryIso3 !== wanted) setCountryIso3(wanted);
+      return;
+    }
+
+    // 2) Otherwise, ensure we have a valid selection (fallback to first option)
     if (!countryIso3 || !countryOptions.some((c) => c.iso3 === countryIso3)) {
       setCountryIso3(countryOptions[0].iso3);
     }
-  }, [countryOptions, countryIso3]);
+  }, [countryOptions, countryIso3, idFromUrl]);
 
   const selectedCountry = useMemo(() => {
     return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
@@ -108,14 +133,36 @@ const Country = () => {
     return Object.keys(byYear).map(Number).sort((a, b) => b - a);
   }, [index, countryIso3]);
 
-  // Keep year valid
+  // ✅ Pick year from URL ONCE (if valid), then fall back to latest
   useEffect(() => {
     if (!availableYears.length) return;
-    if (!availableYears.includes(year)) setYear(availableYears[0]);
-  }, [availableYears, year]);
 
-  const row = countryIso3 ? index?.[countryIso3]?.[year] : undefined;
-  const prev = countryIso3 ? index?.[countryIso3]?.[year - 1] : undefined;
+    const urlYear =
+      yearFromUrlRaw && Number.isFinite(Number(yearFromUrlRaw))
+        ? Number(yearFromUrlRaw)
+        : null;
+
+    // Apply URL year only once (per navigation)
+    if (!appliedUrlYearRef.current) {
+      appliedUrlYearRef.current = true;
+
+      if (urlYear != null && availableYears.includes(urlYear)) {
+        setYear(urlYear);
+        return;
+      }
+      
+      // No valid URL year, set to latest
+      setYear(availableYears[0]);
+      return;
+    }
+
+    // After initial application, keep current if valid, else default to latest
+    if (year !== null && availableYears.includes(year)) return;
+    setYear(availableYears[0]);
+  }, [availableYears, yearFromUrlRaw, year]);
+
+  const row = countryIso3 && year !== null ? index?.[countryIso3]?.[year] : undefined;
+  const prev = countryIso3 && year !== null ? index?.[countryIso3]?.[year - 1] : undefined;
 
   const overallScore = row?.total_score ?? null;
   const econScore = row?.econ_score ?? null;
@@ -138,6 +185,26 @@ const Country = () => {
     });
   }, [availableYears, index, countryIso3]);
 
+  // ✅ Keep URL in sync (but DON'T overwrite an incoming ?year=... before we apply it)
+  useEffect(() => {
+    if (!countryIso3) return;
+    if (!availableYears.length) return;
+    if (year === null) return; // Don't sync until year is set
+
+    // If URL had a year and we haven't applied it yet, do not replace URL
+    if (yearFromUrlRaw && !appliedUrlYearRef.current) return;
+
+    const wantedId = countryIso3.toUpperCase();
+    const wantedYear = String(year);
+
+    const currentId = (searchParams.get("id") || "").toUpperCase();
+    const currentYear = searchParams.get("year") || "";
+
+    if (currentId !== wantedId || currentYear !== wantedYear) {
+      setSearchParams({ id: wantedId, year: wantedYear }, { replace: true });
+    }
+  }, [countryIso3, year, availableYears.length, yearFromUrlRaw, searchParams, setSearchParams]);
+
   return (
     <Layout>
       <div className="container mx-auto px-6 py-8">
@@ -156,7 +223,7 @@ const Country = () => {
             <p className="text-xs text-muted-foreground mt-1">
               {countryIso3 ? `ISO3: ${countryIso3}` : ""}
               {selectedCountry?.region ? ` • Region: ${selectedCountry.region}` : ""}
-              {availableYears.length ? ` • Year: ${year}` : ""}
+              {year !== null ? ` • Year: ${year}` : ""}
             </p>
           </div>
 
@@ -195,7 +262,7 @@ const Country = () => {
 
             {/* Year dropdown */}
             <Select
-              value={availableYears.length ? year.toString() : ""}
+              value={year !== null ? year.toString() : ""}
               onValueChange={(v) => setYear(Number(v))}
               disabled={!availableYears.length}
             >
@@ -353,7 +420,7 @@ const Country = () => {
               socPct={socScore}
               phyPct={phyScore}
               countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
-              year={availableYears.length ? year : undefined}
+              year={year !== null ? year : undefined}
             />
           </div>
         </div>
@@ -388,7 +455,7 @@ const Country = () => {
             <div className="space-y-1">
               <p className="text-foreground font-medium">Recommendations</p>
               <p>
-                Based on the lowest available front score. If a front is missing, it’s skipped.
+                Based on the lowest available front score. If a front is missing, it's skipped.
               </p>
             </div>
 
