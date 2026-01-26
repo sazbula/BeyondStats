@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import Character from "./Character";
 import TimelineEvent, { TimelineEventData } from "./TimelineEvent";
 import ParallaxLayer from "./ParallaxLayer";
-import YearMarker from "./YearMarker";
 
 const TIMELINE_EVENTS: TimelineEventData[] = [
   {
@@ -12,10 +11,10 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     title: "Seneca Falls Convention",
     description:
       "The first women’s rights convention organized by women. The Declaration of Sentiments demanded equality, including the controversial call for women’s suffrage, launching an organized rights movement.",
-    type: "document",
+    type: "women",
     era: "past",
     position: 700,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "vote-1893-nz",
@@ -26,7 +25,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "ballot",
     era: "past",
     position: 1200,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "vote-1895-sa",
@@ -34,21 +33,21 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     title: "Equal political rights (South Australia)",
     description:
       "South Australia granted women both the right to vote and to stand for Parliament, becoming the first electorate to offer full political equality.",
-    type: "ballot",
+    type: "politics",
     era: "past",
-    position: 1400,
-    scale: 2,
+    position: 1500,
+    scale: 1,
   },
   {
     id: "pay-1963-equalpay",
     year: 1963,
     title: "Equal Pay Act (United States)",
     description:
-      "The Equal Pay Act prohibited wage discrimination based on sex, making economic equality a legal principle—even though pay gaps persisted.",
-    type: "coins",
+      "The Equal Pay Act prohibited wage discrimination based on sex, making economic equality a legal principle, even though pay gaps persisted.",
+    type: "money",
     era: "mid",
     position: 2900,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "edu-1972-titleix",
@@ -56,10 +55,10 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     title: "Title IX (United States)",
     description:
       "Banned sex-based discrimination in federally funded education, dramatically expanding women’s access to universities, sports, and academic careers.",
-    type: "document",
+    type: "education",
     era: "mid",
     position: 3250,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "repro-1973-roe",
@@ -70,7 +69,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "gavel",
     era: "mid",
     position: 3550,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "leader-1980-iceland",
@@ -81,7 +80,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "podium",
     era: "mid",
     position: 4000,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "care-2000-iceland",
@@ -92,18 +91,18 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "care",
     era: "modern",
     position: 4500,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "family-2008-korea",
     year: 2008,
     title: "South Korea abolishes head-of-family system",
     description:
-      "Abolished a legal system that made men automatic household heads, ending enforced provider roles and enabling shared parental authority—an equality milestone for men, too.",
+      "Abolished a legal system that made men automatic household heads, ending enforced provider roles and enabling shared parental authority, an equality milestone for men, too.",
     type: "scales",
     era: "modern",
     position: 4900,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "fgm-2011-un",
@@ -114,17 +113,17 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "shield",
     era: "modern",
     position: 5200,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "custody-2013-germany",
     year: 2013,
     title: "Shared custody reforms (Germany)",
     description:
-      "Family-law reforms promoted shared custody by default, strengthening fathers’ rights and legally recognizing equal parenthood—quiet but transformative.",
+      "Family-law reforms promoted shared custody by default, strengthening fathers’ rights and legally recognizing equal parenthood, quiet but transformative.",
     type: "family",
     era: "modern",
-    position: 5400,
+    position: 5450,
     scale: 1,
   },
   {
@@ -136,7 +135,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "megaphone",
     era: "modern",
     position: 5800,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "saudi-2018-driving",
@@ -147,7 +146,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "steeringWheel",
     era: "modern",
     position: 6100,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "spain-2018-strike",
@@ -158,7 +157,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "fist",
     era: "modern",
     position: 6400,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "france-2018-harassment",
@@ -166,10 +165,10 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     title: "France criminalizes street harassment",
     description:
       "Introduced nationwide on-the-spot fines for street harassment (including catcalling), shifting responsibility from women’s avoidance to perpetrator accountability.",
-    type: "document",
+    type: "arrest",
     era: "modern",
     position: 6700,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "uae-2019-reforms",
@@ -180,7 +179,7 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "unlock",
     era: "modern",
     position: 7000,
-    scale: 2,
+    scale: 1,
   },
   {
     id: "afghan-2021-education",
@@ -191,18 +190,18 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "bookLock",
     era: "modern",
     position: 7300,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "us-2022-abortion",
     year: 2022,
     title: "Abortion rights overturned (United States)",
     description:
-      "Federal constitutional protection for abortion was removed, allowing states to ban or severely restrict access—one of the most significant modern rollbacks of reproductive rights.",
+      "Federal constitutional protection for abortion was removed, allowing states to ban or severely restrict access, one of the most significant modern rollbacks of reproductive rights.",
     type: "brokenGavel",
     era: "modern",
     position: 7600,
-    scale: 3,
+    scale: 1,
   },
   {
     id: "iran-2022-crackdown",
@@ -213,10 +212,9 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
     type: "shieldAlert",
     era: "modern",
     position: 7900,
-    scale: 3,
+    scale: 1,
   },
 
-  // ----- Ongoing issues (display as “Ongoing” in UI) -----
   {
     id: "ongoing-unequal-inheritance",
     year: 0,
@@ -225,8 +223,8 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
       "In some legal systems, women inherit less than male relatives by default, reinforcing structural economic dependence and long-term gender inequality.",
     type: "brokenCoins",
     era: "modern",
-    position: 8350,
-    scale: 2,
+    position: 8500,
+    scale: 1,
   },
   {
     id: "ongoing-bokoharam-education",
@@ -236,8 +234,8 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
       "Militant groups such as Boko Haram have targeted girls’ schools through attacks and kidnappings, using education as a battleground to suppress women’s autonomy in conflict zones.",
     type: "warningBook",
     era: "modern",
-    position: 8650,
-    scale: 2,
+    position: 9000,
+    scale: 1,
   },
   {
     id: "ongoing-criminalised-miscarriage",
@@ -247,8 +245,8 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
       "In some countries, women have faced investigation or prosecution after miscarriages under restrictive abortion laws, blurring healthcare with criminal law and undermining bodily autonomy.",
     type: "brokenShield",
     era: "modern",
-    position: 8950,
-    scale: 2,
+    position: 9500,
+    scale: 1,
   },
   {
     id: "ongoing-child-marriage-loopholes",
@@ -258,28 +256,43 @@ const TIMELINE_EVENTS: TimelineEventData[] = [
       "Despite minimum-age laws, legal exceptions still allow girls to be married under 18 with parental or judicial consent, harming education, health, and long-term autonomy.",
     type: "warningRing",
     era: "modern",
-    position: 9250,
-    scale: 2,
+    position: 10000,
+    scale: 1,
   },
 ];
 
-const TIMELINE_WIDTH = 8500;
 const CHARACTER_X_POSITION = 200;
+
+// tune these:
+const END_PADDING = 1500; // empty space after last event
+const STOP_BEFORE = -70;  // stop slightly before the last event so the sprite doesn't overlap
 
 const TimelineWorld = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // smooth keyboard refs
   const keysHeldRef = useRef({ left: false, right: false });
   const rafRef = useRef<number | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // ✅ last event and timeline width computed from data
+  const LAST_EVENT_X = useMemo(
+    () => Math.max(...TIMELINE_EVENTS.map((e) => e.position)),
+    []
+  );
+
+  const TIMELINE_WIDTH = useMemo(() => LAST_EVENT_X + END_PADDING, [LAST_EVENT_X]);
+
+  const MAX_SCROLL_PROGRESS = useMemo(() => {
+    // characterWorldPosition = scrollProgress * TIMELINE_WIDTH + CHARACTER_X_POSITION
+    // We want characterWorldPosition === LAST_EVENT_X
+    const raw = (LAST_EVENT_X - CHARACTER_X_POSITION - STOP_BEFORE) / TIMELINE_WIDTH;
+    return Math.max(0, Math.min(1, raw));
+  }, [LAST_EVENT_X, TIMELINE_WIDTH]);
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
-  // ✅ Background should NOT "re-randomize" every render:
-  // Pre-generate shapes ONCE.
   const clouds = useMemo(() => {
     return Array.from({ length: 20 }, (_, i) => ({
       key: i,
@@ -299,30 +312,34 @@ const TimelineWorld = () => {
     }));
   }, []);
 
-  // ✅ Era is kept in state; but (important) this is NOT the flicker culprit anymore.
   const [era, setEra] = useState<"past" | "early" | "mid" | "modern">("past");
 
   useEffect(() => {
-    const progress = scrollProgress * TIMELINE_WIDTH;
-    if (progress < 1800) setEra("past");
-    else if (progress < 3300) setEra("early");
-    else if (progress < 5200) setEra("mid");
+    const progressPx = scrollProgress * TIMELINE_WIDTH;
+    if (progressPx < 1800) setEra("past");
+    else if (progressPx < 3300) setEra("early");
+    else if (progressPx < 5200) setEra("mid");
     else setEra("modern");
-  }, [scrollProgress]);
+  }, [scrollProgress, TIMELINE_WIDTH]);
 
-  // Wheel scroll (optional)
+  // Wheel scroll (capped)
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault();
       const delta = e.deltaY || e.deltaX;
-      const newProgress = Math.max(0, Math.min(1, scrollProgress + delta / TIMELINE_WIDTH));
-      setScrollProgress(newProgress);
+
+      const next = Math.max(
+        0,
+        Math.min(MAX_SCROLL_PROGRESS, scrollProgress + delta / TIMELINE_WIDTH)
+      );
+
+      setScrollProgress(next);
 
       setIsScrolling(true);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       scrollTimeoutRef.current = setTimeout(() => setIsScrolling(false), 150);
     },
-    [scrollProgress]
+    [scrollProgress, MAX_SCROLL_PROGRESS, TIMELINE_WIDTH]
   );
 
   useEffect(() => {
@@ -332,9 +349,9 @@ const TimelineWorld = () => {
     return () => container.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
-  // ✅ Smooth keyboard (hold ←/→)
+  // Smooth keyboard (hold ←/→) (capped)
   useEffect(() => {
-    const SPEED_PX_PER_SEC = 1400; // tweak: 900 slower, 1800 faster
+    const SPEED_PX_PER_SEC = 1400;
     let lastTime = 0;
 
     const stop = () => {
@@ -349,7 +366,9 @@ const TimelineWorld = () => {
       const dt = (t - lastTime) / 1000;
       lastTime = t;
 
-      const dir = (keysHeldRef.current.right ? 1 : 0) - (keysHeldRef.current.left ? 1 : 0);
+      const dir =
+        (keysHeldRef.current.right ? 1 : 0) -
+        (keysHeldRef.current.left ? 1 : 0);
 
       if (dir === 0) {
         stop();
@@ -359,7 +378,7 @@ const TimelineWorld = () => {
       const deltaProgress = (dir * SPEED_PX_PER_SEC * dt) / TIMELINE_WIDTH;
 
       setScrollProgress((prev) => {
-        const next = Math.max(0, Math.min(1, prev + deltaProgress));
+        const next = Math.max(0, Math.min(MAX_SCROLL_PROGRESS, prev + deltaProgress));
         return next;
       });
 
@@ -401,7 +420,7 @@ const TimelineWorld = () => {
       window.removeEventListener("blur", onBlur);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [MAX_SCROLL_PROGRESS, TIMELINE_WIDTH]);
 
   // active event detection
   useEffect(() => {
@@ -419,9 +438,15 @@ const TimelineWorld = () => {
     });
 
     setActiveEventId(nearestEvent?.id || null);
-  }, [scrollProgress]);
+  }, [scrollProgress, TIMELINE_WIDTH]);
 
   const worldOffset = -scrollProgress * TIMELINE_WIDTH;
+
+  // progress bar normalized so it hits 100% when the character stops
+  const progressPercent =
+    MAX_SCROLL_PROGRESS > 0
+      ? Math.min(100, (scrollProgress / MAX_SCROLL_PROGRESS) * 100)
+      : 0;
 
   return (
     <div
@@ -432,7 +457,13 @@ const TimelineWorld = () => {
       {/* Era background transition */}
       <div
         className={`absolute inset-0 transition-colors duration-[2000ms] ${
-          era === "past" ? "era-past" : era === "early" ? "era-early" : era === "mid" ? "era-mid" : "era-modern"
+          era === "past"
+            ? "era-past"
+            : era === "early"
+            ? "era-early"
+            : era === "mid"
+            ? "era-mid"
+            : "era-modern"
         }`}
       />
 
@@ -482,10 +513,6 @@ const TimelineWorld = () => {
         <div className="ground-layer absolute bottom-0 left-0 right-0 h-20" />
         <div className="timeline-track absolute bottom-16 left-0 right-0 h-1 rounded-full" />
 
-        {[1840, 1860, 1880, 1900, 1920, 1940, 1960, 1980, 2000, 2020].map((year, i) => (
-          <YearMarker key={year} year={year} position={300 + i * 600} />
-        ))}
-
         {TIMELINE_EVENTS.map((event) => (
           <TimelineEvent
             key={event.id}
@@ -509,7 +536,9 @@ const TimelineWorld = () => {
           transition={{ delay: 0.5 }}
           className="text-center"
         >
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">Walk Through Time</h1>
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
+            Walk Through Time
+          </h1>
           <p className="text-muted-foreground text-sm md:text-base">
             Use ← → to explore the history of gender equality
           </p>
@@ -518,18 +547,9 @@ const TimelineWorld = () => {
 
       {/* Progress bar */}
       <div className="absolute bottom-4 left-8 right-8 h-1 bg-muted rounded-full overflow-hidden">
-        <motion.div className="h-full bg-primary rounded-full" style={{ width: `${scrollProgress * 100}%` }} />
+        <motion.div className="h-full bg-primary rounded-full" style={{ width: `${progressPercent}%` }} />
       </div>
 
-      {/* Era indicator */}
-      <div className="absolute bottom-8 right-8 flex items-center gap-2">
-        <span className="text-xs text-muted-foreground uppercase tracking-wider">
-          {era === "past" && "1840s - 1890s"}
-          {era === "early" && "1900s - 1940s"}
-          {era === "mid" && "1950s - 1980s"}
-          {era === "modern" && "1990s - Present"}
-        </span>
-      </div>
     </div>
   );
 };

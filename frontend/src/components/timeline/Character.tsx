@@ -40,8 +40,8 @@ const Character = ({ isWalking, era }: CharacterProps) => {
 
   return (
     <svg
-      width="32"
-      height="48"
+      width="64"
+      height="96"
       viewBox="0 0 32 48"
       className={`character ${isWalking ? "character-walking" : ""}`}
     >
