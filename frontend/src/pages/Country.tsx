@@ -13,15 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceArea,
-} from "recharts";
 
 type Trend = "up" | "down" | "stable";
 
@@ -110,24 +101,34 @@ const Country = () => {
     return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [metaWithData, region]);
 
-// Initialize country from URL or default (only once on mount)
+// Initialize country from URL or default (only once)
 useEffect(() => {
   if (!countryOptions.length) return;
   if (hasInitialized.current) return;
+
   const wanted = (idFromUrl ?? "").toUpperCase();
 
-  // URL wins if valid
-  if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
-    setCountryIso3(wanted);
-  } else {
-    // otherwise pick ANY country at random
-    const pick = countryOptions[Math.floor(Math.random() * countryOptions.length)];
-    setCountryIso3(pick.iso3);
+  // 1) If URL id is valid, use it
+  const urlMatch =
+    wanted && countryOptions.some((c) => c.iso3 === wanted) ? wanted : null;
+
+  if (urlMatch) {
+    setCountryIso3(urlMatch);
+    hasInitialized.current = true;
+    return;
   }
 
-  hasInitialized.current = true;
-}, [countryOptions, idFromUrl]);
+  // 2) Otherwise pick RANDOM EUROPE (fallback to any country if none)
+  const europe = countryOptions.filter((c) => (c.region || "Other") === "Europe");
+  const pool = europe.length ? europe : countryOptions;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
 
+  // Optional but nice: set region so dropdown matches the pick
+  setRegion(europe.length ? "Europe" : "All");
+  setCountryIso3(pick.iso3);
+
+  hasInitialized.current = true;
+}, [countryOptions, idFromUrl, setCountryIso3, setRegion]);
 
 const selectedCountry = useMemo(() => {
   return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
@@ -170,6 +171,7 @@ useEffect(() => {
 
   // Trend series, use all available years for this country
   const MAX_BARS = 35; // change to Infinity if you truly want all
+
   const trendSeries = useMemo(() => {
     if (!countryIso3 || !availableYears.length) return [];
 
@@ -183,15 +185,6 @@ useEffect(() => {
       return { year: y, score: r?.total_score ?? null };
     });
   }, [availableYears, index, countryIso3]);
-  const chartData = useMemo(
-    () => trendSeries.map((d) => ({ year: String(d.year), score: d.score ?? null })),
-    [trendSeries]
-  );
-  const { minScore, maxScore } = useMemo(() => {
-    const vals = trendSeries.map((d) => d.score).filter((v): v is number => v != null);
-    if (!vals.length) return { minScore: null as number | null, maxScore: null as number | null };
-    return { minScore: Math.min(...vals), maxScore: Math.max(...vals) };
-  }, [trendSeries]);  
 
   // Manual handlers that update both state AND URL
   const handleCountryChange = (newCountryIso3: string) => {
@@ -391,49 +384,29 @@ useEffect(() => {
               className="stat-card"
             >
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
-                Progression
+                Progression Over Time
               </h2>
-
-              <div className="h-56 w-full">
-                {chartData.length ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-                      <XAxis
-                        dataKey="year"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fontSize: 11 }}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis
-                        domain={[0, 100]}
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fontSize: 11 }}
-                      />
-
-                      <Tooltip
-                        contentStyle={{
-                          background: "rgba(20, 16, 22, 0.9)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: 12,
-                        }}
-                        labelStyle={{ color: "rgba(255,255,255,0.85)" }}
-                        formatter={(v: any) => (v == null ? ["—", "Score"] : [Math.round(v), "Score"])}
-                      />
-
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        strokeWidth={3}
-                        dot={false}
-                        connectNulls={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="text-muted-foreground">No trend data available.</div>
-                )}
+              <div className="overflow-x-auto pb-2">
+                <div className="flex items-end gap-3 min-w-max">
+                  {trendSeries.map((d, i) => {
+                    const h = clamp01(d.score ?? 0);
+                    return (
+                      <div key={d.year} className="w-10 flex flex-col items-center gap-2">
+                        <div className="w-full h-36 flex items-end">
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: `${h}%` }}
+                            transition={{ duration: 0.6, delay: 0.1 + i * 0.02 }}
+                            className="w-full accent-gradient rounded-t-2xl"
+                          />
+                        </div>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          {d.year}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           </div>
