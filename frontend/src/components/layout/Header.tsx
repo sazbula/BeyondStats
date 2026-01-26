@@ -44,7 +44,7 @@ export function Header() {
         <img
           src="/logo.png"
           alt="BeyondStats logo"
-          className="h-22 w-22 md:h-16 md:w-24 object-contain"
+          className="h-22 w-22 md:h-14 md:w-24 object-contain"
           draggable={false}
         />
 
