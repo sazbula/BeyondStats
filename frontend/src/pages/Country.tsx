@@ -391,7 +391,7 @@ useEffect(() => {
               className="stat-card"
             >
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
-                Change Over Time (Total Score)
+                Progression
               </h2>
 
               <div className="h-56 w-full">
