@@ -17,7 +17,7 @@ const QUESTION_POOL: Question[] = [
 
   {
     id: 101,
-    statement: "At least one country in the world has achieved full gender parity (100%).",
+    statement: "At least one country in the world has achieved full gender parity.",
     isTrue: false,
     explanation:
       "WEF reporting notes no country has fully achieved gender parity; top performers are still below 100%.",
@@ -80,7 +80,7 @@ const QUESTION_POOL: Question[] = [
 
   {
     id: 108,
-    statement: "More than 1.2 million women live in countries with restrictive abortion laws.",
+    statement: "About 500 million women live in countries with restrictive abortion laws.",
     isTrue: false,
     explanation:
       "Some global summaries estimate that over 1.2 billion women live under restrictive abortion legislation.",
