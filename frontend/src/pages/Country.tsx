@@ -253,7 +253,7 @@ const Country = () => {
               <SelectContent>
                 {countryOptions.map((c) => (
                   <SelectItem key={c.iso3} value={c.iso3}>
-                    {c.name} ({c.iso3})
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>

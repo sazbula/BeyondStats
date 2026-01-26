@@ -9,6 +9,7 @@ declare global {
 export type WorldMapDatum = {
   iso2: string; // GeoChart wants ISO2 or country name
   score: number | null; // 0–100
+  name?: string; // Optional country name for tooltip
 };
 
 export default function WorldMap(props: {
@@ -44,7 +45,11 @@ export default function WorldMap(props: {
         ["Country", "Total Score"],
         ...data
           .filter((d) => d.iso2 && d.score != null)
-          .map((d) => [d.iso2, d.score]),
+          .map((d) => [
+            // Use name if provided, otherwise fall back to ISO2
+            d.name || d.iso2,
+            d.score
+          ]),
       ];
 
       const dt = window.google.visualization.arrayToDataTable(table);

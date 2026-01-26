@@ -102,9 +102,11 @@ const Explore = () => {
       .map((r) => {
         const metaRow = metaByIso3.get(r.countryCode);
         const iso2 = metaRow?.iso2 ?? "";
+        const name = metaRow?.name ?? ""; // Get country name
         return {
           iso2,
           score: r.total_score,
+          name, // Pass country name to map
         };
       })
       .filter((d) => !!d.iso2);
