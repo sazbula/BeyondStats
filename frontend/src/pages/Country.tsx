@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, GraduationCap, Heart, Users } from "lucide-react";
-
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/country/StatCard";
 import { RecommendationsCard } from "@/components/country/RecommendationsCard";
@@ -23,18 +22,13 @@ type CountryMeta = {
   region: string; // Europe / Asia / Africa / Americas / Oceania / Other
 };
 
-const closenessPct = (v: number) => Math.round((1 / (1 + Math.abs(v))) * 100);
-
-const trendToZero = (curr?: number, prev?: number): Trend => {
+const trend = (curr?: number | null, prev?: number | null): Trend => {
   if (curr == null || prev == null) return "stable";
-  const dc = Math.abs(curr);
-  const dp = Math.abs(prev);
-  if (Math.abs(dc - dp) < 1e-9) return "stable";
-  return dc < dp ? "up" : "down";
+  if (curr === prev) return "stable";
+  return curr > prev ? "up" : "down";
 };
-
+const clamp01 = (v: number) => Math.max(0, Math.min(100, v));
 const REGION_ORDER = ["Europe", "Americas", "Asia", "Africa", "Oceania", "Other"] as const;
-
 const Country = () => {
   const { rows, index, loading, error } = usePredictions();
 
@@ -63,16 +57,14 @@ const Country = () => {
     };
   }, []);
 
-  // Countries available in predictions CSV
   const iso3WithData = useMemo(() => new Set(rows.map((r) => r.countryCode)), [rows]);
 
-  // Meta filtered to only those present in CSV
   const metaWithData = useMemo(() => {
     if (!meta.length) return [];
     return meta.filter((m) => iso3WithData.has(m.iso3));
   }, [meta, iso3WithData]);
 
-  // Regions present (from metaWithData)
+  // Regions present
   const regions = useMemo(() => {
     const set = new Set<string>();
     for (const m of metaWithData) set.add(m.region || "Other");
@@ -108,7 +100,7 @@ const Country = () => {
     return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
   }, [countryOptions, countryIso3]);
 
-  // Available years for selected country (from predictions index)
+  // Available years for selected country
   const availableYears = useMemo(() => {
     if (!countryIso3) return [];
     const byYear = index?.[countryIso3];
@@ -125,21 +117,15 @@ const Country = () => {
   const row = countryIso3 ? index?.[countryIso3]?.[year] : undefined;
   const prev = countryIso3 ? index?.[countryIso3]?.[year - 1] : undefined;
 
-  // overall_score is predicted GII-like: lower is better -> convert to "higher is better"
-  const overallScore = row ? Math.round((1 - row.overall_score) * 100) : null;
+  const overallScore = row?.total_score ?? null;
+  const econScore = row?.econ_score ?? null;
+  const socScore = row?.social_score ?? null;
+  const phyScore = row?.physical_score ?? null;
 
-  const econPct = row ? closenessPct(row.ineq_econ) : null;
-  const socPct = row ? closenessPct(row.ineq_soc) : null;
-  const phyPct = row ? closenessPct(row.ineq_phy) : null;
-
-  const overallTrend: Trend =
-    row && prev ? trendToZero(row.overall_score, prev.overall_score) : "stable";
-  const econTrend: Trend =
-    row && prev ? trendToZero(row.ineq_econ, prev.ineq_econ) : "stable";
-  const socTrend: Trend =
-    row && prev ? trendToZero(row.ineq_soc, prev.ineq_soc) : "stable";
-  const phyTrend: Trend =
-    row && prev ? trendToZero(row.ineq_phy, prev.ineq_phy) : "stable";
+  const overallTrend: Trend = trend(overallScore, prev?.total_score);
+  const econTrend: Trend = trend(econScore, prev?.econ_score);
+  const socTrend: Trend = trend(socScore, prev?.social_score);
+  const phyTrend: Trend = trend(phyScore, prev?.physical_score);
 
   // Trend series (last 5 available years, ascending)
   const trendSeries = useMemo(() => {
@@ -147,7 +133,7 @@ const Country = () => {
     const yearsAsc = [...availableYears].sort((a, b) => a - b).slice(-5);
     return yearsAsc.map((y) => {
       const r = index?.[countryIso3]?.[y];
-      const score = r ? Math.round((1 - r.overall_score) * 100) : 0;
+      const score = r?.total_score ?? null;
       return { year: y, score };
     });
   }, [availableYears, index, countryIso3]);
@@ -166,9 +152,7 @@ const Country = () => {
             <h1 className="text-4xl font-display font-bold text-foreground mb-2">
               {selectedCountry?.name ?? countryIso3 ?? "Country"}
             </h1>
-            <p className="text-muted-foreground">
-              Deep dive into gender equality metrics and trends
-            </p>
+            <p className="text-muted-foreground">Deep dive into equality scores and trends</p>
             <p className="text-xs text-muted-foreground mt-1">
               {countryIso3 ? `ISO3: ${countryIso3}` : ""}
               {selectedCountry?.region ? ` • Region: ${selectedCountry.region}` : ""}
@@ -231,7 +215,7 @@ const Country = () => {
 
         {(loading || error || metaError) && (
           <div className="mb-6 text-sm">
-            {loading && <div className="text-muted-foreground">Loading predictions…</div>}
+            {loading && <div className="text-muted-foreground">Loading scores…</div>}
             {error && <div className="text-red-300">{error}</div>}
             {metaError && <div className="text-red-300">{metaError}</div>}
           </div>
@@ -245,30 +229,33 @@ const Country = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         >
           <StatCard
-            label="Overall Score"
-            value={overallScore != null ? String(overallScore) : "—"}
+            label="Total Score"
+            value={overallScore != null ? String(Math.round(overallScore)) : "—"}
             subValue="/100"
             icon={Users}
             trend={overallTrend}
             delay={0.1}
           />
           <StatCard
-            label="Economic Equality"
-            value={econPct != null ? `${econPct}%` : "—"}
+            label="Economic"
+            value={econScore != null ? `${Math.round(econScore)}` : "—"}
+            subValue="/100"
             icon={DollarSign}
             trend={econTrend}
             delay={0.2}
           />
           <StatCard
-            label="Social Equality"
-            value={socPct != null ? `${socPct}%` : "—"}
+            label="Social"
+            value={socScore != null ? `${Math.round(socScore)}` : "—"}
+            subValue="/100"
             icon={GraduationCap}
             trend={socTrend}
             delay={0.3}
           />
           <StatCard
-            label="Physical Equality"
-            value={phyPct != null ? `${phyPct}%` : "—"}
+            label="Physical"
+            value={phyScore != null ? `${Math.round(phyScore)}` : "—"}
+            subValue="/100"
             icon={Heart}
             trend={phyTrend}
             delay={0.4}
@@ -279,7 +266,7 @@ const Country = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Gender Gaps Breakdown */}
+            {/* Front Breakdown */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -287,16 +274,16 @@ const Country = () => {
               className="stat-card"
             >
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
-                Gender Gaps Breakdown
+                Front Breakdown
               </h2>
 
               <div className="space-y-6">
                 {[
-                  { label: "Economic front", pct: econPct, raw: row?.ineq_econ },
-                  { label: "Social front", pct: socPct, raw: row?.ineq_soc },
-                  { label: "Physical front", pct: phyPct, raw: row?.ineq_phy },
+                  { label: "Economic front", value: econScore },
+                  { label: "Social front", value: socScore },
+                  { label: "Physical front", value: phyScore },
                 ].map((item, i) => {
-                  const v = item.pct ?? 0;
+                  const v = clamp01(item.value ?? 0);
                   return (
                     <motion.div
                       key={item.label}
@@ -307,8 +294,7 @@ const Country = () => {
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-foreground">{item.label}</span>
                         <span className="text-sm text-muted-foreground">
-                          {item.pct != null ? `${item.pct}%` : "—"}
-                          {item.raw != null ? ` • raw ${item.raw.toFixed(2)}` : ""}
+                          {item.value != null ? `${Math.round(item.value)}/100` : "—"}
                         </span>
                       </div>
 
@@ -334,22 +320,25 @@ const Country = () => {
               className="stat-card"
             >
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
-                Change Over Time
+                Change Over Time (Total Score)
               </h2>
 
               <div className="flex items-end justify-between h-40 gap-2">
                 {trendSeries.length ? (
-                  trendSeries.map((d, i) => (
-                    <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${d.score}%` }}
-                        transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
-                        className="w-full accent-gradient rounded-t-lg min-h-[20px]"
-                      />
-                      <span className="text-xs text-muted-foreground">{d.year}</span>
-                    </div>
-                  ))
+                  trendSeries.map((d, i) => {
+                    const h = clamp01(d.score ?? 0);
+                    return (
+                      <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${h}%` }}
+                          transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
+                          className="w-full accent-gradient rounded-t-lg min-h-[20px]"
+                        />
+                        <span className="text-xs text-muted-foreground">{d.year}</span>
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="text-muted-foreground">No trend data available.</div>
                 )}
@@ -360,16 +349,16 @@ const Country = () => {
           {/* Right column */}
           <div className="lg:col-span-1 space-y-6">
             <RecommendationsCard
-              econPct={econPct}
-              socPct={socPct}
-              phyPct={phyPct}
+              econPct={econScore}
+              socPct={socScore}
+              phyPct={phyScore}
               countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
               year={availableYears.length ? year : undefined}
             />
           </div>
         </div>
 
-        {/* Full-width methodology row */}
+        {/* Methodology */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -382,32 +371,31 @@ const Country = () => {
 
           <div className="grid md:grid-cols-4 gap-4 text-sm text-muted-foreground">
             <div className="space-y-1">
-              <p className="text-foreground font-medium">Overall score</p>
+              <p className="text-foreground font-medium">Total score</p>
               <p>
-                Uses <code>overall_score</code>. Displayed as{" "}
-                <code>(1 − overall_score) × 100</code>.
+                Uses <code>total_score</code> from the CSV (0–100). Higher is better.
               </p>
             </div>
 
             <div className="space-y-1">
               <p className="text-foreground font-medium">Front scores</p>
               <p>
-                From <code>ineq_econ</code>, <code>ineq_soc</code>, <code>ineq_phy</code>{" "}
-                using <code>1 / (1 + |gap|)</code>.
+                Uses <code>econ_score</code>, <code>social_score</code>,{" "}
+                <code>physical_score</code> (0–100). Higher is better.
               </p>
             </div>
 
             <div className="space-y-1">
               <p className="text-foreground font-medium">Recommendations</p>
               <p>
-                Lowest front score → severity: high (&lt;30), middle (30–59), low (≥60).
+                Based on the lowest available front score. If a front is missing, it’s skipped.
               </p>
             </div>
 
             <div className="space-y-1">
               <p className="text-foreground font-medium">Trends</p>
               <p>
-                Compares selected year vs previous year (if available) and shows movement toward 0.
+                Compares selected year vs previous year. Up = higher score, down = lower score.
               </p>
             </div>
           </div>

@@ -3,24 +3,29 @@ import { X, TrendingUp, TrendingDown, Minus, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
+type Trend = "up" | "down" | "stable";
+
 interface CountrySidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   country: {
-    id: string;
+    id: string; // ISO3
     name: string;
-    score: number;
+    year: number;
+    total_score: number | null;
+    econ_score: number | null;
+    social_score: number | null;
+    physical_score: number | null;
+    econTrend: Trend;
+    socTrend: Trend;
+    phyTrend: Trend;
   } | null;
 }
 
-const mockMetrics = {
-  economic: { value: 0.72, trend: "up" as const },
-  health: { value: 0.89, trend: "stable" as const },
-  education: { value: 0.95, trend: "up" as const },
-};
+const clamp01 = (v: number) => Math.max(0, Math.min(100, v));
 
-const getTrendIcon = (trend: "up" | "down" | "stable") => {
-  switch (trend) {
+const getTrendIcon = (t: Trend) => {
+  switch (t) {
     case "up":
       return <TrendingUp className="w-4 h-4 text-stat-positive" />;
     case "down":
@@ -43,15 +48,14 @@ export function CountrySidePanel({ isOpen, onClose, country }: CountrySidePanelP
             onClick={onClose}
             className="fixed inset-0 bg-foreground/10 backdrop-blur-sm z-40"
           />
-          
+
           {/* Panel */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl z-50 overflow-y-auto"
-          >
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl z-50 overflow-y-auto">
             <div className="p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-8">
@@ -59,9 +63,7 @@ export function CountrySidePanel({ isOpen, onClose, country }: CountrySidePanelP
                   <h2 className="text-2xl font-display font-bold text-foreground">
                     {country.name}
                   </h2>
-                  <p className="text-muted-foreground mt-1">
-                    Year: 2023
-                  </p>
+                  <p className="text-muted-foreground mt-1">Year: {country.year}</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -70,85 +72,60 @@ export function CountrySidePanel({ isOpen, onClose, country }: CountrySidePanelP
                   <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
-              
               {/* Overall Score */}
               <div className="stat-card mb-6">
-                <p className="text-sm text-muted-foreground mb-1">Overall Equality Score</p>
+                <p className="text-sm text-muted-foreground mb-1">Total Score</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-display font-bold text-primary">
-                    {(country.score * 100).toFixed(0)}
+                    {country.total_score != null ? Math.round(country.total_score) : "—"}
                   </span>
                   <span className="text-muted-foreground">/100</span>
                 </div>
               </div>
-              
-              {/* Gap Metrics */}
+              {/* Front Scores */}
               <div className="space-y-4 mb-8">
                 <h3 className="text-sm font-medium text-foreground uppercase tracking-wider">
-                  Gender Gaps
+                  Front Scores
                 </h3>
-                
-                <div className="stat-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Economic Gap</span>
-                    {getTrendIcon(mockMetrics.economic.trend)}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${mockMetrics.economic.value * 100}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="h-full accent-gradient rounded-full"
-                      />
+
+                {[
+                  {
+                    label: "Economic",
+                    value: country.econ_score,
+                    t: country.econTrend,
+                  },
+                  {
+                    label: "Social",
+                    value: country.social_score,
+                    t: country.socTrend,
+                  },
+                  {
+                    label: "Physical",
+                    value: country.physical_score,
+                    t: country.phyTrend,
+                  },
+                ].map((m, i) => (
+                  <div key={m.label} className="stat-card">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">{m.label}</span>
+                      {getTrendIcon(m.t)}
                     </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {(mockMetrics.economic.value * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="stat-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Health Gap</span>
-                    {getTrendIcon(mockMetrics.health.trend)}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${mockMetrics.health.value * 100}%` }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        className="h-full accent-gradient rounded-full"
-                      />
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${clamp01(m.value ?? 0)}%` }}
+                          transition={{ duration: 0.8, delay: 0.15 + i * 0.08 }}
+                          className="h-full accent-gradient rounded-full"
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-foreground">
+                        {m.value != null ? `${Math.round(m.value)}` : "—"}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {(mockMetrics.health.value * 100).toFixed(0)}%
-                    </span>
                   </div>
-                </div>
-                
-                <div className="stat-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Education Gap</span>
-                    {getTrendIcon(mockMetrics.education.trend)}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${mockMetrics.education.value * 100}%` }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="h-full accent-gradient rounded-full"
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {(mockMetrics.education.value * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
-              
               {/* CTA */}
               <Link to={`/country?id=${country.id}`}>
                 <Button className="w-full group" size="lg">
