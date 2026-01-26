@@ -23,11 +23,15 @@ export interface TimelineEventData {
   title: string;
   description: string;
   type:
-    | "document"
+    | "women"
     | "coins"
     | "factory"
     | "screen"
     | "landmark"
+    | "politics"
+    | "money"
+    | "education"
+    | "arrest"
     | "ballot"
     | "gavel"
     | "bookLock"
@@ -61,32 +65,35 @@ interface TimelineEventProps {
    ✅ Map each type -> Canva asset path
    ------------------------------------ */
 const ICON_SRC: Record<TimelineEventData["type"], string> = {
-  document: "/icons/document.svg",
-  coins: "/icons/coins.svg",
-  factory: "/icons/factory.svg",
-  screen: "/icons/screen.svg",
-  landmark: "/icons/landmark.svg",
+  women: "/icons/women.png",
+  coins: "/icons/coins.png",
+  factory: "/icons/factory.png",
+  screen: "/icons/screen.png",
+  landmark: "/icons/landmark.png",
+  politics: "/icons/politics.png",
+  money: "/icons/money.png",
+  education: "/icons/education.png",
+  arrest: "/icons/arrest.png",
 
-  ballot: "/icons/ballot.svg",
+  ballot: "/icons/ballot.png",
   gavel: "/icons/gavel.png",
-  bookLock: "/icons/book-lock.svg",
-  steeringWheel: "/icons/steering-wheel.svg",
-  megaphone: "/icons/megaphone.svg",
-  fist: "/icons/fist.svg",
-  shieldAlert: "/icons/shield-alert.svg",
+  bookLock: "/icons/book-lock.png",
+  steeringWheel: "/icons/steeringWheel.png",
+  megaphone: "/icons/megaphone.png",
+  fist: "/icons/fist.png",
+  shieldAlert: "/icons/shield-alert.png",
+  podium: "/icons/podium.png",
+  care: "/icons/care.png",
+  scales: "/icons/scales.png",
+  shield: "/icons/shield.png",
+  family: "/icons/family.png",
+  unlock: "/icons/unlock.png",
 
-  podium: "/icons/podium.svg",
-  care: "/icons/care.svg",
-  scales: "/icons/scales.svg",
-  shield: "/icons/shield.svg",
-  family: "/icons/family.svg",
-  unlock: "/icons/unlock.svg",
-
-  brokenGavel: "/icons/broken-gavel.svg",
-  brokenCoins: "/icons/broken-coins.svg",
-  warningBook: "/icons/warning-book.svg",
-  brokenShield: "/icons/broken-shield.svg",
-  warningRing: "/icons/warning-ring.svg",
+  brokenGavel: "/icons/broken-gavel.png",
+  brokenCoins: "/icons/broken-coins.png",
+  warningBook: "/icons/warning-book.png",
+  brokenShield: "/icons/broken-shield.png",
+  warningRing: "/icons/warning-ring.png",
 };
 
 /* ------------------------------------
@@ -166,9 +173,6 @@ const TimelineEvent = ({ event, isActive, onClick }: TimelineEventProps) => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               {event.description}
             </p>
-            <button className="mt-3 text-xs text-primary hover:text-primary/80 font-medium">
-              Learn more →
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
