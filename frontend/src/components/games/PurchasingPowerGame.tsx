@@ -158,7 +158,7 @@ export function PurchasingPowerGame({}: PurchasingPowerGameProps) {
 
   const switchGender = (gender: "man" | "woman") => {
     setSelectedGender(gender);
-    setSelectedItems([]);
+    // DON'T reset selections - removed: setSelectedItems([]);
   };
 
   return (
@@ -285,8 +285,8 @@ export function PurchasingPowerGame({}: PurchasingPowerGameProps) {
 
             <p className="text-muted-foreground text-sm leading-relaxed mb-4">
               {selectedGender === "woman"
-                ? "Across the EU, women are paid an average of 16.2% less than men — for every €1 a man makes, a woman makes about €0.84. Try selecting the core bills first (rent, electricity, food, transport, phone & internet) and see what’s left for healthcare, fees, clothes, unexpected costs — and even free time."
-                : "Switch to 'As a Woman' to apply the EU average gender pay gap (16.2% less). Then try selecting the core bills first (rent, electricity, food, transport, phone & internet) and see what’s left for everything else — including free time."}
+                ? "Across the EU, women are paid an average of 16.2% less than men — for every €1 a man makes, a woman makes about €0.84. Try selecting the core bills first (rent, electricity, food, transport, phone & internet) and see what's left for healthcare, fees, clothes, unexpected costs — and even free time."
+                : "Switch to 'As a Woman' to apply the EU average gender pay gap (16.2% less). Then try selecting the core bills first (rent, electricity, food, transport, phone & internet) and see what's left for everything else — including free time."}
             </p>
 
             <div className="flex gap-3">
