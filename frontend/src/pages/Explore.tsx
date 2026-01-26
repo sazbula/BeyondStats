@@ -64,16 +64,22 @@ const Explore = () => {
     [rows]
   );
 
-  const [year, setYear] = useState<number>(2023);
+  const [year, setYear] = useState<number | null>(null);
   const [selectedIso3, setSelectedIso3] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
+  // Set year to latest available year when years are loaded
   useEffect(() => {
     if (!years.length) return;
-    setYear((y) => (years.includes(y) ? y : years[0]));
-  }, [years]);
+    if (year === null) {
+      setYear(years[0]); // Latest year (sorted descending)
+    } else if (!years.includes(year)) {
+      setYear(years[0]); // Fallback if current year is invalid
+    }
+  }, [years, year]);
 
   const options = useMemo(() => {
+    if (year === null) return [];
     return Array.from(
       new Set(rows.filter((r) => r.year === year).map((r) => r.countryCode))
     ).sort();
@@ -81,6 +87,7 @@ const Explore = () => {
 
   // map data uses ISO2 (GeoChart)
   const mapData: WorldMapDatum[] = useMemo(() => {
+    if (year === null) return [];
     const filtered = rows.filter((r) => r.year === year);
     return filtered
       .map((r) => {
@@ -94,8 +101,8 @@ const Explore = () => {
       .filter((d) => !!d.iso2);
   }, [rows, year, metaByIso3]);
 
-  const row = selectedIso3 ? index?.[selectedIso3]?.[year] : undefined;
-  const prev = selectedIso3 ? index?.[selectedIso3]?.[year - 1] : undefined;
+  const row = selectedIso3 && year !== null ? index?.[selectedIso3]?.[year] : undefined;
+  const prev = selectedIso3 && year !== null ? index?.[selectedIso3]?.[year - 1] : undefined;
   const selectedMeta = selectedIso3 ? metaByIso3.get(selectedIso3) : undefined;
 
   const country = row
@@ -156,8 +163,9 @@ const Explore = () => {
         <div className="mb-4 flex gap-3 items-center flex-wrap">
           <select
             className="border rounded px-3 py-2 bg-background"
-            value={year}
+            value={year !== null ? year : ""}
             onChange={(e) => setYear(Number(e.target.value))}
+            disabled={!years.length}
           >
             {years.map((y) => (
               <option key={y} value={y}>
