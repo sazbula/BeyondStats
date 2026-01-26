@@ -30,6 +30,7 @@ const trend = (curr?: number | null, prev?: number | null): Trend => {
   if (curr === prev) return "stable";
   return curr > prev ? "up" : "down";
 };
+
 const clamp01 = (v: number) => Math.max(0, Math.min(100, v));
 const REGION_ORDER = ["Europe", "Americas", "Asia", "Africa", "Oceania", "Other"] as const;
 
@@ -103,60 +104,60 @@ const Country = () => {
     return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [metaWithData, region]);
 
-// Initialize country from URL or default (only once)
-useEffect(() => {
-  if (!countryOptions.length) return;
-  if (hasInitialized.current) return;
+  // Initialize country from URL or default (only once)
+  useEffect(() => {
+    if (!countryOptions.length) return;
+    if (hasInitialized.current) return;
 
-  const wanted = (idFromUrl ?? "").toUpperCase();
+    const wanted = (idFromUrl ?? "").toUpperCase();
 
-  // 1) If URL id is valid, use it
-  const urlMatch =
-    wanted && countryOptions.some((c) => c.iso3 === wanted) ? wanted : null;
+    // 1) If URL id is valid, use it
+    const urlMatch =
+      wanted && countryOptions.some((c) => c.iso3 === wanted) ? wanted : null;
 
-  if (urlMatch) {
-    setCountryIso3(urlMatch);
+    if (urlMatch) {
+      setCountryIso3(urlMatch);
+      hasInitialized.current = true;
+      return;
+    }
+
+    // 2) Otherwise pick RANDOM EUROPE (fallback to any country if none)
+    const europe = countryOptions.filter((c) => (c.region || "Other") === "Europe");
+    const pool = europe.length ? europe : countryOptions;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+
+    // Optional but nice: set region so dropdown matches the pick
+    setRegion(europe.length ? "Europe" : "All");
+    setCountryIso3(pick.iso3);
+
     hasInitialized.current = true;
-    return;
-  }
+  }, [countryOptions, idFromUrl, setCountryIso3, setRegion]);
 
-  // 2) Otherwise pick RANDOM EUROPE (fallback to any country if none)
-  const europe = countryOptions.filter((c) => (c.region || "Other") === "Europe");
-  const pool = europe.length ? europe : countryOptions;
-  const pick = pool[Math.floor(Math.random() * pool.length)];
+  const selectedCountry = useMemo(() => {
+    return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
+  }, [countryOptions, countryIso3]);
 
-  // Optional but nice: set region so dropdown matches the pick
-  setRegion(europe.length ? "Europe" : "All");
-  setCountryIso3(pick.iso3);
+  // Available years for selected country
+  const availableYears = useMemo(() => {
+    if (!countryIso3) return [];
+    const byYear = index?.[countryIso3];
+    if (!byYear) return [];
+    return Object.keys(byYear).map(Number).sort((a, b) => b - a);
+  }, [index, countryIso3]);
 
-  hasInitialized.current = true;
-}, [countryOptions, idFromUrl, setCountryIso3, setRegion]);
+  // Initialize year from URL or default to latest (only once per page load)
+  useEffect(() => {
+    if (!availableYears.length) return;
+    if (year !== null) return;
 
-const selectedCountry = useMemo(() => {
-  return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
-}, [countryOptions, countryIso3]);
+    const urlYear =
+      yearFromUrlRaw && Number.isFinite(Number(yearFromUrlRaw))
+        ? Number(yearFromUrlRaw)
+        : null;
 
-// Available years for selected country
-const availableYears = useMemo(() => {
-  if (!countryIso3) return [];
-  const byYear = index?.[countryIso3];
-  if (!byYear) return [];
-  return Object.keys(byYear).map(Number).sort((a, b) => b - a);
-}, [index, countryIso3]);
-
-// Initialize year from URL or default to latest (only once per page load)
-useEffect(() => {
-  if (!availableYears.length) return;
-  if (year !== null) return;
-
-  const urlYear =
-    yearFromUrlRaw && Number.isFinite(Number(yearFromUrlRaw))
-      ? Number(yearFromUrlRaw)
-      : null;
-
-  // Pick year: URL param if valid, otherwise latest
-  setYear(urlYear != null && availableYears.includes(urlYear) ? urlYear : availableYears[0]);
-}, [availableYears, year, yearFromUrlRaw, setYear]);
+    // Pick year: URL param if valid, otherwise latest
+    setYear(urlYear != null && availableYears.includes(urlYear) ? urlYear : availableYears[0]);
+  }, [availableYears, year, yearFromUrlRaw, setYear]);
 
   const row = countryIso3 && year !== null ? index?.[countryIso3]?.[year] : undefined;
   const prev = countryIso3 && year !== null ? index?.[countryIso3]?.[year - 1] : undefined;
@@ -171,18 +172,14 @@ useEffect(() => {
   const socTrend: Trend = trend(socScore, prev?.social_score);
   const phyTrend: Trend = trend(phyScore, prev?.physical_score);
 
-  // Trend series, use all available years for this country
-  const MAX_BARS = 35; // change to Infinity if you truly want all
-
+  // ✅ Trend series: use ALL available years (no slicing)
   const trendSeries = useMemo(() => {
     if (!countryIso3 || !availableYears.length) return [];
 
-    // years ascending
+    // years ascending for left->right timeline
     const yearsAsc = [...availableYears].sort((a, b) => a - b);
 
-    const years = yearsAsc.length > MAX_BARS ? yearsAsc.slice(-MAX_BARS) : yearsAsc;
-
-    return years.map((y) => {
+    return yearsAsc.map((y) => {
       const r = index?.[countryIso3]?.[y];
       return { year: y, score: r?.total_score ?? null };
     });
@@ -383,26 +380,46 @@ useEffect(() => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="stat-card"
+              className="stat-card overflow-visible"
             >
               <h2 className="text-xl font-display font-semibold text-foreground mb-6">
-                Progression Over Time
+                Change Over Time
               </h2>
-              <div className="overflow-x-auto pb-2">
-                <div className="flex items-end gap-3 min-w-max">
+
+              {/* ✅ Scroll stays, but bars are thicker and never shrink */}
+              <div
+                className="
+                  overflow-x-auto pb-3 pt-12
+                  [-webkit-overflow-scrolling:touch]
+                  scroll-smooth
+                "
+              >
+                <div className="flex items-end gap-4 min-w-max px-1">
                   {trendSeries.map((d, i) => {
                     const h = clamp01(d.score ?? 0);
+                    const scoreDisplay = d.score != null ? Math.round(d.score) : "—";
                     return (
-                      <div key={d.year} className="w-10 flex flex-col items-center gap-2">
+                      <div
+                        key={d.year}
+                        className="w-20 shrink-0 flex flex-col items-center gap-2 group relative"
+                      >
+                        {/* Tooltip - positioned at top */}
+                        <div className="absolute bottom-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                          <div className="bg-popover text-popover-foreground px-3 py-1.5 rounded-md shadow-lg text-sm font-medium border border-border">
+                            {scoreDisplay}/100
+                          </div>
+                        </div>
+
                         <div className="w-full h-36 flex items-end">
                           <motion.div
                             initial={{ height: 0 }}
                             animate={{ height: `${h}%` }}
                             transition={{ duration: 0.6, delay: 0.1 + i * 0.02 }}
-                            className="w-full accent-gradient rounded-t-2xl"
+                            className="w-full accent-gradient rounded-t-sm cursor-pointer transition-opacity hover:opacity-80"
                           />
                         </div>
-                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                        
+                        <span className="text-[11px] text-muted-foreground">
                           {d.year}
                         </span>
                       </div>
@@ -414,25 +431,23 @@ useEffect(() => {
           </div>
 
           {/* Right column */}
-      <div className="lg:col-span-1 space-y-6">
-        <RecommendationsCard
-          econPct={econScore}
-          socPct={socScore}
-          phyPct={phyScore}
-          countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
-          year={year !== null ? year : undefined}
-        />
+          <div className="lg:col-span-1 space-y-6">
+            <RecommendationsCard
+              econPct={econScore}
+              socPct={socScore}
+              phyPct={phyScore}
+              countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
+              year={year !== null ? year : undefined}
+            />
 
-        <WhatYouCanDoCard
-          econScore={econScore}
-          socScore={socScore}
-          phyScore={phyScore}
-          refreshKey={`${countryIso3}-${year}`}
-        />
-      </div>
+            <WhatYouCanDoCard
+              econScore={econScore}
+              socScore={socScore}
+              phyScore={phyScore}
+              refreshKey={`${countryIso3}-${year}`}
+            />
+          </div>
         </div>
-
-        
       </div>
     </Layout>
   );
