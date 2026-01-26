@@ -49,7 +49,7 @@ export const WHAT_YOU_CAN_DO: ActionItem[] = [
     id: "men_low_2",
     severity: "low",
     tag: "relationships",
-    text: "Encourage healthy masculinity: praise empathy, emotional honesty, and respectful behavior—not aggression or dominance.",
+    text: "Encourage healthy masculinity: praise empathy, emotional honesty, and respectful behavior, not aggression or dominance.",
   },
 
   // =========================
@@ -71,7 +71,7 @@ export const WHAT_YOU_CAN_DO: ActionItem[] = [
     id: "a7",
     severity: "middle",
     tag: "community",
-    text: "Share practical resources (hotlines, shelters, legal aid) in your network—people often don’t know what exists.",
+    text: "Share practical resources (hotlines, shelters, legal aid) in your network, people often don’t know what exists.",
   },
   {
     id: "a8",
@@ -105,7 +105,7 @@ export const WHAT_YOU_CAN_DO: ActionItem[] = [
     id: "a4",
     severity: "high",
     tag: "money",
-    text: "Donate regularly—even small amounts—to vetted orgs focused on education, legal support, or safety.",
+    text: "Donate regularly, even small amounts, to vetted orgs focused on education, legal support, or safety.",
   },
   {
     id: "a5",
