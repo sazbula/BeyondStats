@@ -39,14 +39,8 @@ const Country = () => {
   const idFromUrl = searchParams.get("id"); // ISO3
   const yearFromUrlRaw = searchParams.get("year"); // e.g. "2019"
 
-  // ✅ prevents URL-sync from overwriting the incoming URL year
-  const appliedUrlYearRef = useRef(false);
-
-  // Reset "applied URL year" when URL params change (new navigation)
-  useEffect(() => {
-    appliedUrlYearRef.current = false;
-    initializedRef.current = false; // Also reset country initialization
-  }, [idFromUrl, yearFromUrlRaw]);
+  // Track if we've initialized (only happens once on mount)
+  const hasInitialized = useRef(false);
 
   // Load ISO3->name->region mapping
   const [meta, setMeta] = useState<CountryMeta[]>([]);
@@ -95,8 +89,8 @@ const Country = () => {
   const [countryIso3, setCountryIso3] = useState<string>("");
   const [year, setYear] = useState<number | null>(null);
 
-  // Track if we've done initial setup
-  const initializedRef = useRef(false);
+  // Track if we've initialized from URL
+  const hasInitializedFromUrl = useRef(false);
 
   // Countries for current region
   const countryOptions = useMemo(() => {
@@ -107,39 +101,22 @@ const Country = () => {
     return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [metaWithData, region]);
 
-  // ✅ Ensure selected country exists + prioritize URL param (?id=ISO3)
+  // ✅ Initialize country from URL or default (only once on mount)
   useEffect(() => {
     if (!countryOptions.length) return;
+    if (hasInitialized.current) return; // Already initialized, never run again
 
     const wanted = idFromUrl ? idFromUrl.toUpperCase() : null;
 
-    // If this is initial load and we haven't set anything yet
-    if (!initializedRef.current) {
-      initializedRef.current = true;
-      
-      // 1) If URL has an id and it exists in current options, select it
-      if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
-        setCountryIso3(wanted);
-        return;
-      }
-      
-      // 2) Otherwise, select first option
-      setCountryIso3(countryOptions[0].iso3);
-      return;
-    }
-
-    // After initialization, only update if current selection is invalid
-    if (countryIso3 && countryOptions.some((c) => c.iso3 === countryIso3)) {
-      return; // Current selection is valid, keep it
-    }
-    
-    // Current selection is invalid, pick new one
+    // Pick country: URL param if valid, otherwise first option
     if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
       setCountryIso3(wanted);
     } else {
       setCountryIso3(countryOptions[0].iso3);
     }
-  }, [countryOptions, countryIso3, idFromUrl]);
+    
+    hasInitialized.current = true;
+  }, [countryOptions]); // ONLY depend on countryOptions, not idFromUrl
 
   const selectedCountry = useMemo(() => {
     return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
@@ -153,33 +130,23 @@ const Country = () => {
     return Object.keys(byYear).map(Number).sort((a, b) => b - a);
   }, [index, countryIso3]);
 
-  // ✅ Pick year from URL ONCE (if valid), then fall back to latest
+  // ✅ Initialize year from URL or default to latest (only once on mount)
   useEffect(() => {
     if (!availableYears.length) return;
+    if (year !== null) return; // Already set, don't change it
 
     const urlYear =
       yearFromUrlRaw && Number.isFinite(Number(yearFromUrlRaw))
         ? Number(yearFromUrlRaw)
         : null;
 
-    // Apply URL year only once (per navigation)
-    if (!appliedUrlYearRef.current) {
-      appliedUrlYearRef.current = true;
-
-      if (urlYear != null && availableYears.includes(urlYear)) {
-        setYear(urlYear);
-        return;
-      }
-      
-      // No valid URL year, set to latest
-      setYear(availableYears[0]);
-      return;
+    // Pick year: URL param if valid, otherwise latest
+    if (urlYear != null && availableYears.includes(urlYear)) {
+      setYear(urlYear);
+    } else {
+      setYear(availableYears[0]); // Latest year
     }
-
-    // After initial application, keep current if valid, else default to latest
-    if (year !== null && availableYears.includes(year)) return;
-    setYear(availableYears[0]);
-  }, [availableYears, yearFromUrlRaw, year]);
+  }, [availableYears]); // ONLY depend on availableYears, not yearFromUrlRaw or year
 
   const row = countryIso3 && year !== null ? index?.[countryIso3]?.[year] : undefined;
   const prev = countryIso3 && year !== null ? index?.[countryIso3]?.[year - 1] : undefined;
@@ -205,25 +172,21 @@ const Country = () => {
     });
   }, [availableYears, index, countryIso3]);
 
-  // ✅ Keep URL in sync (but DON'T overwrite an incoming ?year=... before we apply it)
-  useEffect(() => {
-    if (!countryIso3) return;
-    if (!availableYears.length) return;
-    if (year === null) return; // Don't sync until year is set
-
-    // If URL had a year and we haven't applied it yet, do not replace URL
-    if (yearFromUrlRaw && !appliedUrlYearRef.current) return;
-
-    const wantedId = countryIso3.toUpperCase();
-    const wantedYear = String(year);
-
-    const currentId = (searchParams.get("id") || "").toUpperCase();
-    const currentYear = searchParams.get("year") || "";
-
-    if (currentId !== wantedId || currentYear !== wantedYear) {
-      setSearchParams({ id: wantedId, year: wantedYear }, { replace: true });
+  // Manual handlers that update both state AND URL
+  const handleCountryChange = (newCountryIso3: string) => {
+    setCountryIso3(newCountryIso3);
+    if (year !== null) {
+      setSearchParams({ id: newCountryIso3.toUpperCase(), year: String(year) }, { replace: true });
     }
-  }, [countryIso3, year, availableYears.length, yearFromUrlRaw, searchParams, setSearchParams]);
+  };
+
+  const handleYearChange = (newYear: string) => {
+    const yearNum = Number(newYear);
+    setYear(yearNum);
+    if (countryIso3) {
+      setSearchParams({ id: countryIso3.toUpperCase(), year: newYear }, { replace: true });
+    }
+  };
 
   return (
     <Layout>
@@ -265,7 +228,7 @@ const Country = () => {
             {/* Country dropdown */}
             <Select
               value={countryIso3}
-              onValueChange={setCountryIso3}
+              onValueChange={handleCountryChange}
               disabled={!countryOptions.length}
             >
               <SelectTrigger className="w-[260px]">
@@ -283,7 +246,7 @@ const Country = () => {
             {/* Year dropdown */}
             <Select
               value={year !== null ? year.toString() : ""}
-              onValueChange={(v) => setYear(Number(v))}
+              onValueChange={handleYearChange}
               disabled={!availableYears.length}
             >
               <SelectTrigger className="w-[120px]">
