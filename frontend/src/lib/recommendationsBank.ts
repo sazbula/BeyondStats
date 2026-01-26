@@ -1,5 +1,3 @@
-// src/lib/recommendationsBank.ts
-
 export type Front = "economic" | "social" | "physical";
 export type Severity = "low" | "middle" | "high";
 

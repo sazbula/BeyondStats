@@ -1,5 +1,3 @@
-// src/components/country/RecommendationsCard.tsx
-
 import React, { useMemo } from "react";
 import { buildRecommendations } from "@/lib/buildRecommendations";
 import type { Front } from "@/lib/recommendationsBank";
@@ -70,10 +68,6 @@ export function RecommendationsCard(props: {
           </>
         )}
       </div>
-
-      <p className="text-xs text-muted-foreground mt-4">
-        Data source: CSV predictions for {countryName ?? "—"} in {year ?? "—"}.
-      </p>
     </div>
   );
 }

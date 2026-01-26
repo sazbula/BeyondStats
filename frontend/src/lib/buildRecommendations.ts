@@ -1,10 +1,8 @@
-// src/lib/buildRecommendations.ts
-
 import { REC_BANK, Front, Severity, RecItem } from "./recommendationsBank";
 
 export function getWorstFront(scores: Record<Front, number>): Front {
   return (Object.entries(scores) as [Front, number][])
-    .sort((a, b) => a[1] - b[1])[0][0]; // lowest score = worst
+    .sort((a, b) => a[1] - b[1])[0][0];
 }
 
 export function severityFromScore(score: number): Severity {

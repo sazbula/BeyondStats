@@ -279,7 +279,7 @@ const Country = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         >
           <StatCard
-            label="Total Score"
+            label="Gender Inequality Index"
             value={overallScore != null ? String(Math.round(overallScore)) : "—"}
             subValue="/100"
             icon={Users}
@@ -373,18 +373,23 @@ const Country = () => {
                 Change Over Time (Total Score)
               </h2>
 
-              <div className="flex items-end justify-between h-40 gap-2">
+              <div className="flex items-end justify-between gap-3">
                 {trendSeries.length ? (
                   trendSeries.map((d, i) => {
-                    const h = clamp01(d.score ?? 0);
+                    const h = clamp01(d.score ?? 0); // 0–100
                     return (
                       <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: `${h}%` }}
-                          transition={{ duration: 0.6, delay: 0.6 + i * 0.1 }}
-                          className="w-full accent-gradient rounded-t-lg min-h-[20px]"
-                        />
+                        {/* Fixed bar area height */}
+                        <div className="w-full h-32 flex items-end">
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: `${h}%` }}
+                            transition={{ duration: 0.6, delay: 0.2 + i * 0.08 }}
+                            className="w-full accent-gradient rounded-t-lg"
+                            style={{ minHeight: d.score == null ? 6 : 10, opacity: d.score == null ? 0.35 : 1 }}
+                          />
+                        </div>
+
                         <span className="text-xs text-muted-foreground">{d.year}</span>
                       </div>
                     );
@@ -413,39 +418,40 @@ const Country = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="stat-card mt-6"
-        >
+          className="stat-card mt-6">
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-            How this is calculated
+            How our Gender Inequality Index works
           </h2>
 
-          <div className="grid md:grid-cols-4 gap-4 text-sm text-muted-foreground">
-            <div className="space-y-1">
-              <p className="text-foreground font-medium">Total score</p>
+          <div className="grid md:grid-cols-3 gap-6 text-sm text-muted-foreground">
+            <div className="space-y-2">
+              <p className="text-foreground font-medium">What we measure</p>
               <p>
-                Uses <code>total_score</code> from the CSV (0–100). Higher is better.
+                We measure gender inequality using <b>three wellbeing fronts</b>:
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><b>Economic</b> — work, income, participation</li>
+                <li><b>Social</b> — education, rights, opportunity</li>
+                <li><b>Physical</b> — health, safety, bodily autonomy</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <p className="text-foreground font-medium">What the scores mean</p>
+              <p>
+                Each front is scored from <b>0 to 100</b>.
+              </p>
+              <p>
+                <b>Higher = better equality</b>. Lower means larger gaps.
               </p>
             </div>
-
-            <div className="space-y-1">
-              <p className="text-foreground font-medium">Front scores</p>
+            <div className="space-y-2">
+              <p className="text-foreground font-medium">Total score & trends</p>
               <p>
-                Uses <code>econ_score</code>, <code>social_score</code>,{" "}
-                <code>physical_score</code> (0–100). Higher is better.
+                The <b>Total Score</b> summarizes overall performance across the fronts.
               </p>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-foreground font-medium">Recommendations</p>
               <p>
-                Based on the lowest available front score. If a front is missing, it's skipped.
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-foreground font-medium">Trends</p>
-              <p>
-                Compares selected year vs previous year. Up = higher score, down = lower score.
+                Trends compare the selected year to the previous year:
+                <b> up = improvement</b>, <b>down = worse</b>.
               </p>
             </div>
           </div>
