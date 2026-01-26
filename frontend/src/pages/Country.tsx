@@ -13,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceArea,
+} from "recharts";
 
 type Trend = "up" | "down" | "stable";
 
@@ -101,52 +110,50 @@ const Country = () => {
     return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [metaWithData, region]);
 
-  // ✅ Initialize country from URL or default (only once on mount)
-  useEffect(() => {
-    if (!countryOptions.length) return;
-    if (hasInitialized.current) return; // Already initialized, never run again
+// Initialize country from URL or default (only once on mount)
+useEffect(() => {
+  if (!countryOptions.length) return;
+  if (hasInitialized.current) return;
+  const wanted = (idFromUrl ?? "").toUpperCase();
 
-    const wanted = idFromUrl ? idFromUrl.toUpperCase() : null;
+  // URL wins if valid
+  if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
+    setCountryIso3(wanted);
+  } else {
+    // otherwise pick ANY country at random
+    const pick = countryOptions[Math.floor(Math.random() * countryOptions.length)];
+    setCountryIso3(pick.iso3);
+  }
 
-    // Pick country: URL param if valid, otherwise first option
-    if (wanted && countryOptions.some((c) => c.iso3 === wanted)) {
-      setCountryIso3(wanted);
-    } else {
-      setCountryIso3(countryOptions[0].iso3);
-    }
-    
-    hasInitialized.current = true;
-  }, [countryOptions]); // ONLY depend on countryOptions, not idFromUrl
+  hasInitialized.current = true;
+}, [countryOptions, idFromUrl]);
 
-  const selectedCountry = useMemo(() => {
-    return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
-  }, [countryOptions, countryIso3]);
 
-  // Available years for selected country
-  const availableYears = useMemo(() => {
-    if (!countryIso3) return [];
-    const byYear = index?.[countryIso3];
-    if (!byYear) return [];
-    return Object.keys(byYear).map(Number).sort((a, b) => b - a);
-  }, [index, countryIso3]);
+const selectedCountry = useMemo(() => {
+  return countryOptions.find((c) => c.iso3 === countryIso3) ?? null;
+}, [countryOptions, countryIso3]);
 
-  // ✅ Initialize year from URL or default to latest (only once on mount)
-  useEffect(() => {
-    if (!availableYears.length) return;
-    if (year !== null) return; // Already set, don't change it
+// Available years for selected country
+const availableYears = useMemo(() => {
+  if (!countryIso3) return [];
+  const byYear = index?.[countryIso3];
+  if (!byYear) return [];
+  return Object.keys(byYear).map(Number).sort((a, b) => b - a);
+}, [index, countryIso3]);
 
-    const urlYear =
-      yearFromUrlRaw && Number.isFinite(Number(yearFromUrlRaw))
-        ? Number(yearFromUrlRaw)
-        : null;
+// Initialize year from URL or default to latest (only once per page load)
+useEffect(() => {
+  if (!availableYears.length) return;
+  if (year !== null) return;
 
-    // Pick year: URL param if valid, otherwise latest
-    if (urlYear != null && availableYears.includes(urlYear)) {
-      setYear(urlYear);
-    } else {
-      setYear(availableYears[0]); // Latest year
-    }
-  }, [availableYears]); // ONLY depend on availableYears, not yearFromUrlRaw or year
+  const urlYear =
+    yearFromUrlRaw && Number.isFinite(Number(yearFromUrlRaw))
+      ? Number(yearFromUrlRaw)
+      : null;
+
+  // Pick year: URL param if valid, otherwise latest
+  setYear(urlYear != null && availableYears.includes(urlYear) ? urlYear : availableYears[0]);
+}, [availableYears, year, yearFromUrlRaw, setYear]);
 
   const row = countryIso3 && year !== null ? index?.[countryIso3]?.[year] : undefined;
   const prev = countryIso3 && year !== null ? index?.[countryIso3]?.[year - 1] : undefined;
@@ -161,16 +168,30 @@ const Country = () => {
   const socTrend: Trend = trend(socScore, prev?.social_score);
   const phyTrend: Trend = trend(phyScore, prev?.physical_score);
 
-  // Trend series (last 5 available years, ascending)
+  // Trend series, use all available years for this country
+  const MAX_BARS = 35; // change to Infinity if you truly want all
   const trendSeries = useMemo(() => {
     if (!countryIso3 || !availableYears.length) return [];
-    const yearsAsc = [...availableYears].sort((a, b) => a - b).slice(-5);
-    return yearsAsc.map((y) => {
+
+    // years ascending
+    const yearsAsc = [...availableYears].sort((a, b) => a - b);
+
+    const years = yearsAsc.length > MAX_BARS ? yearsAsc.slice(-MAX_BARS) : yearsAsc;
+
+    return years.map((y) => {
       const r = index?.[countryIso3]?.[y];
-      const score = r?.total_score ?? null;
-      return { year: y, score };
+      return { year: y, score: r?.total_score ?? null };
     });
   }, [availableYears, index, countryIso3]);
+  const chartData = useMemo(
+    () => trendSeries.map((d) => ({ year: String(d.year), score: d.score ?? null })),
+    [trendSeries]
+  );
+  const { minScore, maxScore } = useMemo(() => {
+    const vals = trendSeries.map((d) => d.score).filter((v): v is number => v != null);
+    if (!vals.length) return { minScore: null as number | null, maxScore: null as number | null };
+    return { minScore: Math.min(...vals), maxScore: Math.max(...vals) };
+  }, [trendSeries]);  
 
   // Manual handlers that update both state AND URL
   const handleCountryChange = (newCountryIso3: string) => {
@@ -373,27 +394,43 @@ const Country = () => {
                 Change Over Time (Total Score)
               </h2>
 
-              <div className="flex items-end justify-between gap-3">
-                {trendSeries.length ? (
-                  trendSeries.map((d, i) => {
-                    const h = clamp01(d.score ?? 0); // 0–100
-                    return (
-                      <div key={d.year} className="flex-1 flex flex-col items-center gap-2">
-                        {/* Fixed bar area height */}
-                        <div className="w-full h-32 flex items-end">
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: `${h}%` }}
-                            transition={{ duration: 0.6, delay: 0.2 + i * 0.08 }}
-                            className="w-full accent-gradient rounded-t-lg"
-                            style={{ minHeight: d.score == null ? 6 : 10, opacity: d.score == null ? 0.35 : 1 }}
-                          />
-                        </div>
+              <div className="h-56 w-full">
+                {chartData.length ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                      <XAxis
+                        dataKey="year"
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fontSize: 11 }}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fontSize: 11 }}
+                      />
 
-                        <span className="text-xs text-muted-foreground">{d.year}</span>
-                      </div>
-                    );
-                  })
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(20, 16, 22, 0.9)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 12,
+                        }}
+                        labelStyle={{ color: "rgba(255,255,255,0.85)" }}
+                        formatter={(v: any) => (v == null ? ["—", "Score"] : [Math.round(v), "Score"])}
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        strokeWidth={3}
+                        dot={false}
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 ) : (
                   <div className="text-muted-foreground">No trend data available.</div>
                 )}
