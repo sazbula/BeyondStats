@@ -4,6 +4,13 @@ import { Layout } from "@/components/layout/Layout";
 import WorldMap, { type WorldMapDatum } from "@/components/explore/WorldMap";
 import { CountrySidePanel } from "@/components/explore/CountrySidePanel";
 import { usePredictions } from "@/hooks/usePredictions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Trend = "up" | "down" | "stable";
 
@@ -161,19 +168,25 @@ const Explore = () => {
         </motion.div>
 
         <div className="mb-4 flex gap-3 items-center flex-wrap">
-          <select
-            className="border rounded px-3 py-2 bg-background"
-            value={year !== null ? year : ""}
-            onChange={(e) => setYear(Number(e.target.value))}
+          <Select
+            value={String(year)}
+            onValueChange={(v) => setYear(Number(v))}
             disabled={!years.length}
           >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder={loading ? "Loading…" : "Year"} />
+            </SelectTrigger>
+
+            <SelectContent className="max-h-64 overflow-y-auto">
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
 
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
