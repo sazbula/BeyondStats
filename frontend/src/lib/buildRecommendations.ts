@@ -6,8 +6,8 @@ export function getWorstFront(scores: Record<Front, number>): Front {
 }
 
 export function severityFromScore(score: number): Severity {
-  if (score < 30) return "high";
-  if (score < 60) return "middle";
+  if (score < 60) return "high";
+  if (score < 76) return "middle";
   return "low";
 }
 

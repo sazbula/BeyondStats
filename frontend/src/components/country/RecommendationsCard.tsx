@@ -54,7 +54,7 @@ export function RecommendationsCard(props: {
               <span className="font-medium text-foreground">
                 {frontLabel(recData.worstFront)}
               </span>{" "}
-              ({severityLabel(recData.severity)} severity)
+              
             </p>
 
             {recData.items.map((r) => (

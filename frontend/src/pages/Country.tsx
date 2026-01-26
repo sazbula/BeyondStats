@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, GraduationCap, Heart, Users } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/country/StatCard";
 import { RecommendationsCard } from "@/components/country/RecommendationsCard";
+import { WhatYouCanDoCard } from "@/components/country/WhatYouCanDoCard";
 import { usePredictions } from "@/hooks/usePredictions";
 import {
   Select,
@@ -412,60 +414,25 @@ useEffect(() => {
           </div>
 
           {/* Right column */}
-          <div className="lg:col-span-1 space-y-6">
-            <RecommendationsCard
-              econPct={econScore}
-              socPct={socScore}
-              phyPct={phyScore}
-              countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
-              year={year !== null ? year : undefined}
-            />
-          </div>
+      <div className="lg:col-span-1 space-y-6">
+        <RecommendationsCard
+          econPct={econScore}
+          socPct={socScore}
+          phyPct={phyScore}
+          countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
+          year={year !== null ? year : undefined}
+        />
+
+        <WhatYouCanDoCard
+          econScore={econScore}
+          socScore={socScore}
+          phyScore={phyScore}
+          refreshKey={`${countryIso3}-${year}`}
+        />
+      </div>
         </div>
 
-        {/* Methodology */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="stat-card mt-6">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-            How our Gender Inequality Index works
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6 text-sm text-muted-foreground">
-            <div className="space-y-2">
-              <p className="text-foreground font-medium">What we measure</p>
-              <p>
-                We measure gender inequality using <b>three wellbeing fronts</b>:
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li><b>Economic</b> — work, income, participation</li>
-                <li><b>Social</b> — education, rights, opportunity</li>
-                <li><b>Physical</b> — health, safety, bodily autonomy</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <p className="text-foreground font-medium">What the scores mean</p>
-              <p>
-                Each front is scored from <b>0 to 100</b>.
-              </p>
-              <p>
-                <b>Higher = better equality</b>. Lower means larger gaps.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-foreground font-medium">Total score & trends</p>
-              <p>
-                The <b>Total Score</b> summarizes overall performance across the fronts.
-              </p>
-              <p>
-                Trends compare the selected year to the previous year:
-                <b> up = improvement</b>, <b>down = worse</b>.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        
       </div>
     </Layout>
   );
