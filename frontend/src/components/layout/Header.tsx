@@ -40,11 +40,19 @@ export function Header() {
       <div className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
           {/* LEFT: Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-2xl font-display font-bold text-foreground">
-              Beyond<span className="text-primary">Stats</span>
-            </span>
-          </Link>
+      <Link to="/" className="flex items-center gap-1.5 shrink-0">
+        <img
+          src="/logo.png"
+          alt="BeyondStats logo"
+          className="h-22 w-22 md:h-16 md:w-24 object-contain"
+          draggable={false}
+        />
+
+        <span className="text-1xl md:text-2xl font-display font-bold text-foreground leading-none">
+          Beyond<span className="text-primary">Stats</span>
+        </span>
+      </Link>
+
 
           {/* RIGHT: Desktop nav + theme toggle */}
           <div className="hidden md:flex items-center gap-2">
