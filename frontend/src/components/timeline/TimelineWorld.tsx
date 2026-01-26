@@ -482,9 +482,7 @@ const TimelineWorld = () => {
         <div className="ground-layer absolute bottom-0 left-0 right-0 h-20" />
         <div className="timeline-track absolute bottom-16 left-0 right-0 h-1 rounded-full" />
 
-        {[1840, 1860, 1880, 1900, 1920, 1940, 1960, 1980, 2000, 2020].map((year, i) => (
-          <YearMarker key={year} year={year} position={300 + i * 600} />
-        ))}
+       
 
         {TIMELINE_EVENTS.map((event) => (
           <TimelineEvent
@@ -521,16 +519,10 @@ const TimelineWorld = () => {
         <motion.div className="h-full bg-primary rounded-full" style={{ width: `${scrollProgress * 100}%` }} />
       </div>
 
-      {/* Era indicator */}
-      <div className="absolute bottom-8 right-8 flex items-center gap-2">
-        <span className="text-xs text-muted-foreground uppercase tracking-wider">
-          {era === "past" && "1840s - 1890s"}
-          {era === "early" && "1900s - 1940s"}
-          {era === "mid" && "1950s - 1980s"}
-          {era === "modern" && "1990s - Present"}
-        </span>
+      
+        
       </div>
-    </div>
+    
   );
 };
 
