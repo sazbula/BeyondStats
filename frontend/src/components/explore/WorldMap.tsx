@@ -57,13 +57,16 @@ export default function WorldMap(props: {
           if (id) onRegionClick({ id });
         });
       }
-
-      chart.draw(dt, {
-        legend: "none",
-        backgroundColor: "transparent",
-        datalessRegionColor: "#f2e9ef",
-        colorAxis: { minValue: 0, maxValue: 100 },
-      });
+    chart.draw(dt, {
+      legend: "none",
+      backgroundColor: "transparent",
+      datalessRegionColor: "#f2e9ef",
+      colorAxis: {
+        minValue: 0,
+        maxValue: 100,
+        colors: ["#f3e8ff", "#c4b5fd", "#7c3aed"], // 💜 purple scale
+      },
+    });
     }
   }, [data, onRegionClick]);
 
