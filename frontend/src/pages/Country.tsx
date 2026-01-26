@@ -4,7 +4,7 @@ import { DollarSign, GraduationCap, Heart, Users } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/country/StatCard";
-import { InsightCard } from "@/components/country/InsightCard";
+import { RecommendationsCard } from "@/components/country/RecommendationsCard";
 import { usePredictions } from "@/hooks/usePredictions";
 import {
   Select,
@@ -77,7 +77,9 @@ const Country = () => {
     const set = new Set<string>();
     for (const m of metaWithData) set.add(m.region || "Other");
     const inOrder = REGION_ORDER.filter((r) => set.has(r));
-    const rest = Array.from(set).filter((r) => !inOrder.includes(r as any)).sort();
+    const rest = Array.from(set)
+      .filter((r) => !inOrder.includes(r as any))
+      .sort();
     return ["All", ...inOrder, ...rest];
   }, [metaWithData]);
 
@@ -139,22 +141,6 @@ const Country = () => {
   const phyTrend: Trend =
     row && prev ? trendToZero(row.ineq_phy, prev.ineq_phy) : "stable";
 
-  const insights = useMemo(() => {
-    if (!row) return ["No prediction available for this country/year (filtered out or missing)."];
-
-    const parts = [
-      { name: "Economic", v: Math.abs(row.ineq_econ) },
-      { name: "Social", v: Math.abs(row.ineq_soc) },
-      { name: "Physical", v: Math.abs(row.ineq_phy) },
-    ].sort((a, b) => b.v - a.v);
-
-    return [
-      `Overall is derived from predicted GII. Lower is better; displayed score is (1 − GII) × 100.`,
-      `Largest deviation from 0 is in the ${parts[0].name.toLowerCase()} front.`,
-      `Most balanced front (closest to 0) is ${parts[2].name.toLowerCase()}.`,
-    ];
-  }, [row]);
-
   // Trend series (last 5 available years, ascending)
   const trendSeries = useMemo(() => {
     if (!countryIso3 || !availableYears.length) return [];
@@ -184,7 +170,9 @@ const Country = () => {
               Deep dive into gender equality metrics and trends
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {countryIso3 ? `ISO3: ${countryIso3}` : ""}{selectedCountry?.region ? ` • Region: ${selectedCountry.region}` : ""}{availableYears.length ? ` • Year: ${year}` : ""}
+              {countryIso3 ? `ISO3: ${countryIso3}` : ""}
+              {selectedCountry?.region ? ` • Region: ${selectedCountry.region}` : ""}
+              {availableYears.length ? ` • Year: ${year}` : ""}
             </p>
           </div>
 
@@ -203,7 +191,7 @@ const Country = () => {
               </SelectContent>
             </Select>
 
-            {/* Country dropdown (ALL countries from CSV, with names) */}
+            {/* Country dropdown */}
             <Select
               value={countryIso3}
               onValueChange={setCountryIso3}
@@ -272,14 +260,14 @@ const Country = () => {
             delay={0.2}
           />
           <StatCard
-            label="Education Equality"
+            label="Social Equality"
             value={socPct != null ? `${socPct}%` : "—"}
             icon={GraduationCap}
             trend={socTrend}
             delay={0.3}
           />
           <StatCard
-            label="Health Equality"
+            label="Physical Equality"
             value={phyPct != null ? `${phyPct}%` : "—"}
             icon={Heart}
             trend={phyTrend}
@@ -370,30 +358,60 @@ const Country = () => {
           </div>
 
           {/* Right column */}
-          <div className="lg:col-span-1">
-            <InsightCard insights={insights} delay={0.4} />
+          <div className="lg:col-span-1 space-y-6">
+            <RecommendationsCard
+              econPct={econPct}
+              socPct={socPct}
+              phyPct={phyPct}
+              countryName={selectedCountry?.name ?? countryIso3 ?? "—"}
+              year={availableYears.length ? year : undefined}
+            />
+          </div>
+        </div>
 
-            <div className="stat-card mt-6">
-              <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-                Recommendations
-              </h2>
+        {/* Full-width methodology row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="stat-card mt-6"
+        >
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+            How this is calculated
+          </h2>
 
-              <div className="space-y-3">
-                <div className="border border-border rounded-xl p-4 bg-card/50">
-                  <div className="font-medium text-foreground">Placeholder</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Hook your model-driven recommendations here later.
-                  </div>
-                </div>
-              </div>
+          <div className="grid md:grid-cols-4 gap-4 text-sm text-muted-foreground">
+            <div className="space-y-1">
+              <p className="text-foreground font-medium">Overall score</p>
+              <p>
+                Uses <code>overall_score</code>. Displayed as{" "}
+                <code>(1 − overall_score) × 100</code>.
+              </p>
+            </div>
 
-              <p className="text-xs text-muted-foreground mt-4">
-                Data source: CSV predictions for {selectedCountry?.name ?? countryIso3 ?? "—"} in{" "}
-                {availableYears.length ? year : "—"}.
+            <div className="space-y-1">
+              <p className="text-foreground font-medium">Front scores</p>
+              <p>
+                From <code>ineq_econ</code>, <code>ineq_soc</code>, <code>ineq_phy</code>{" "}
+                using <code>1 / (1 + |gap|)</code>.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-foreground font-medium">Recommendations</p>
+              <p>
+                Lowest front score → severity: high (&lt;30), middle (30–59), low (≥60).
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-foreground font-medium">Trends</p>
+              <p>
+                Compares selected year vs previous year (if available) and shows movement toward 0.
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </Layout>
   );
